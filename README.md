@@ -128,7 +128,6 @@ Choose  between  _Obfuscator_  and  _Deobfuscator_  using  the  radio  buttons.
 #### ⚠️  Important  Notes
 
 Ensure  to  keep  your  key  file (key.bin) secure as it is essential for deobfuscation.
-
 The  word  mapping  file (word_mapping.txt) is necessary for restoring the original text.
 
   
