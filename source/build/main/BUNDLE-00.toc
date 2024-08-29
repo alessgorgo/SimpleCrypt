@@ -1,0 +1,3 @@
+([('main',
+   '/Users/Aleks/Documents/code/BackUp:PY/pj/obfuscator/256bit/compiled/dist/main',
+   'EXECUTABLE')],)
