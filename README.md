@@ -57,7 +57,7 @@ To execute the script, use the following command in your terminal:
 
 ```bash
 
-./aes-obfuscator.sh
+./AesObfTool.sh
 
 ```
 
