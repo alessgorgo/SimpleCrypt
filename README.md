@@ -36,7 +36,7 @@ Ensure the script has executable permissions by running:
 
 ```bash
 
-chmod +x aes-obfuscator.sh
+chmod +x AesObfTool.sh
 
 ```
 
