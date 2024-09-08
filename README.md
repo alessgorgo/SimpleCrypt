@@ -12,7 +12,7 @@ Open your terminal and run the following command to clone the repository from Gi
 
 ```bash
 
-git clone https://github.com/alessgorgo/aes-obfuscator.git
+git clone https://github.com/alessgorgo/AesObfTool.git
 
 ```
 
@@ -24,7 +24,7 @@ Change to the directory containing the script:
 
 ```bash
 
-cd aes-obfuscator
+cd AesObfTool
 
 ```
 
