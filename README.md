@@ -1,149 +1,192 @@
-# 🛡️ File Obfuscation Script Documentation
 
-This documentation provides a simple guide on how to use the File Obfuscation Script. This script allows you to obfuscate and deobfuscate files and directories using AES-256 encryption.
+# 🛡️ Encryptix: AES-256 Encryption and Decryption Script Documentation
 
-  
+This documentation provides a comprehensive guide to using **Encryptix**, an AES-256 encryption and decryption script. Encryptix enables users to securely encrypt and decrypt files or directories using AES-256 encryption to protect sensitive data.
+
+---
 
 ## 📥 Importing the Script from GitHub
 
 1. **Clone the Repository**:
 
-Open your terminal and run the following command to clone the repository from GitHub:
+   To get the script from GitHub, open your terminal and run:
 
-```bash
-
-git clone https://github.com/alessgorgo/AesObfTool.git
-
-```
-
-  
+   ```bash
+   git clone https://github.com/alessgorgo/Encryptix.git
+   ```
 
 2. **Navigate to the Directory**:
 
-Change to the directory containing the script:
+   After cloning, navigate into the repository folder:
 
-```bash
-
-cd AesObfTool
-
-```
-
-  
+   ```bash
+   cd Encryptix
+   ```
 
 3. **Make the Script Executable**:
 
-Ensure the script has executable permissions by running:
+   Ensure the script is executable by running:
 
-```bash
+   ```bash
+   chmod +x Encryptix.sh
+   ```
 
-chmod +x AesObfTool.sh
+---
 
-```
+## 🛠️ Script Overview
 
-  
+Encryptix provides two main functionalities:
 
-## ⚙️ Compiling the Script
+1. **Encrypt**: Encrypts a file or an entire directory using AES-256 encryption.
+2. **Decrypt**: Decrypts a previously encrypted file or directory.
 
-This script is written in Bash, so there is no need for compilation. You can run it directly if you have the necessary permissions.
+The encryption process outputs a JSON file containing the encrypted data and initialization vector (IV) used for encryption.
 
-  
+---
 
 ## 📝 How to Use the Script
 
+### General Usage
 
-### Running the Script
-
-To execute the script, use the following command in your terminal:
+You can run the script from the terminal using the following syntax:
 
 ```bash
-
-./AesObfTool.sh
-
+./Encryptix.sh {encrypt|decrypt|encrypt_dir|decrypt_dir} input_path output_path
 ```
 
-  
+- `{encrypt}`: Encrypt a single file.
+- `{decrypt}`: Decrypt a single file.
+- `{encrypt_dir}`: Encrypt all files in a directory.
+- `{decrypt_dir}`: Decrypt all files in a directory.
 
-### Menu Options
+### Example Commands
 
-Upon running the script, you will see a menu with the following options:
+#### **Encrypting a File**
 
+```bash
+./Encryptix.sh encrypt sample.txt encrypted_sample.json
+```
 
-1. **Obfuscate Application**: Protect an application by obfuscating its files.
+- **Input**: The `sample.txt` file will be encrypted.
+- **Output**: The encrypted data is stored in `encrypted_sample.json`.
 
-2. **Deobfuscate Application**: Restore an obfuscated application back to its original form.
+#### **Decrypting a File**
 
-3. **Obfuscate Text File**: Encrypt a text file to protect its content.
+```bash
+./Encryptix.sh decrypt encrypted_sample.json decrypted_sample.txt
+```
 
-4. **Deobfuscate Text File**: Decrypt an obfuscated text file back to its original content.
+- **Input**: The `encrypted_sample.json` file will be decrypted.
+- **Output**: The decrypted content is saved in `decrypted_sample.txt`.
 
-  
+#### **Encrypting a Directory**
 
-### Example Usage
+```bash
+./Encryptix.sh encrypt_dir my_directory encrypted_directory
+```
 
-- **Obfuscate an Application**:
+- **Input**: Encrypts all files in the `my_directory`.
+- **Output**: The encrypted files are saved as `.json` files in `encrypted_directory`.
 
-1. Choose option 1.
+#### **Decrypting a Directory**
 
-2. Enter the name of the application (without `.app`).
+```bash
+./Encryptix.sh decrypt_dir encrypted_directory decrypted_directory
+```
 
-3. The obfuscated files will be saved in a new directory prefixed with `obfuscated-`.
+- **Input**: Decrypts all `.json` files from `encrypted_directory`.
+- **Output**: Decrypted files are saved in `decrypted_directory`.
 
-  
+---
 
-- **Deobfuscate an Application**:
+## ⚙️ Command Structure
 
-1. Choose option 2.
+1. **Encrypt a File**: Encrypts a single file and outputs a JSON file with encrypted data and IV.
 
-2. Provide the name of the obfuscated directory.
+   ```bash
+   ./Encryptix.sh encrypt input_file output_file
+   ```
 
-3. The original files will be restored to the specified original directory.
+2. **Decrypt a File**: Decrypts an encrypted JSON file and restores the original content.
 
-  
+   ```bash
+   ./Encryptix.sh decrypt input_file output_file
+   ```
 
-- **Obfuscate a Text File**:
+3. **Encrypt a Directory**: Recursively encrypts all files in a directory and outputs each file as an encrypted JSON.
 
-1. Choose option 3.
+   ```bash
+   ./Encryptix.sh encrypt_dir input_directory output_directory
+   ```
 
-2. Enter the name of the text file to obfuscate.
+4. **Decrypt a Directory**: Recursively decrypts all JSON files in a directory and restores the original files.
 
-3. Specify a name for the output obfuscated file.
+   ```bash
+   ./Encryptix.sh decrypt_dir input_directory output_directory
+   ```
 
-  
+---
 
-- **Deobfuscate a Text File**:
+## 💡 Important Notes
 
-1. Choose option 4.
+- **Password**: For both encryption and decryption operations, you will be prompted to enter a password. Ensure you use a strong password for security.
 
-2. Provide the name of the obfuscated text file.
+- **JSON Output**: Encrypted files are saved in JSON format, containing both the encrypted data and IV used for decryption.
 
-3. Specify a name for the restored original text file.
+- **Dependencies**: The script requires:
+  - **Bash**: Make sure you have a Bash shell environment.
+  - **OpenSSL**: The script uses OpenSSL for AES-256 encryption/decryption.
+  - **jq**: For parsing JSON files.
 
-  
+  Install dependencies if they are missing:
 
-### 💡 Notes
+  ```bash
+  sudo apt-get install openssl jq  # On Linux systems
+  ```
 
-- The script uses OpenSSL for encryption and decryption. Ensure OpenSSL is installed on your system.
+---
 
-- The obfuscated version of the application or text file will be created in the same directory where you run the script.
+## 🛠️ Error Handling
 
-  
+- **Decryption Failure**: If decryption fails (e.g., due to incorrect password or corrupt encrypted file), the script will output an error:
 
-### 🛠️ Dependencies
+  ```bash
+  Error: Decryption failed. Please check your password and the encrypted file.
+  ```
 
-- Bash shell
+- **Invalid Input**: If the provided JSON file lacks an IV or encrypted data, the script will terminate with a validation error.
 
-- OpenSSL
-
-  
+---
 
 ## 📁 File Structure
 
-- `key.bin`: This file contains the generated encryption key used for obfuscation.
+After running the script, the files will be organized as follows:
 
-- The output files will be saved in the specified directories as per the obfuscation or deobfuscation operations.
+- **For File Encryption/Decryption**:
+  - The original file remains unchanged.
+  - Encrypted content is saved in a JSON file (`output_file.json`).
+  - Decrypted content is saved with a specified file extension (e.g., `.txt`, `.doc`).
 
-  
+- **For Directory Encryption/Decryption**:
+  - The encrypted files will be saved in the specified output directory with a `.json` extension.
+  - Decrypted files will be restored to their original format and saved in the output directory.
+
+---
+
+## 🔐 Security Considerations
+
+- **AES-256 Encryption**: This script uses **AES-256-CBC** encryption, which is a highly secure method to protect your files. Always store your passwords securely.
+
+- **Passwords**: Never share your password. If it is lost, decrypting the encrypted files becomes impossible.
+
+- **File Size**: There is no file size limitation, but encryption and decryption times may vary based on the size of files or directories.
+
+---
 
 ## 📖 License
 
-This script is provided for educational purposes. Please ensure to use it responsibly and comply with all relevant laws and regulations regarding file obfuscation and encryption.
+This script is open-source and provided for educational purposes. Use responsibly and in compliance with legal regulations regarding encryption and data protection. Always encrypt sensitive information securely!
+
+---
+
+This documentation provides a detailed overview of the script. You can follow these steps to encrypt or decrypt your files and directories efficiently and securely.
