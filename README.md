@@ -1,4 +1,3 @@
-
 # 🛡️ Encryptix: AES-256 Encryption and Decryption Script Documentation
 
 This documentation provides a comprehensive guide to using **Encryptix**, an AES-256 encryption and decryption script. Encryptix enables users to securely encrypt and decrypt files or directories using AES-256 encryption to protect sensitive data.
@@ -51,7 +50,7 @@ The encryption process outputs a JSON file containing the encrypted data and ini
 You can run the script from the terminal using the following syntax:
 
 ```bash
-./Encryptix.sh {encrypt|decrypt|encrypt_dir|decrypt_dir} input_path output_path
+./Encryptix.sh {encrypt|decrypt|encrypt_dir|decrypt_dir} input_path
 ```
 
 - `{encrypt}`: Encrypt a single file.
@@ -64,74 +63,76 @@ You can run the script from the terminal using the following syntax:
 #### **Encrypting a File**
 
 ```bash
-./Encryptix.sh encrypt sample.txt encrypted_sample.json
+./Encryptix.sh encrypt sample.txt
 ```
 
-- **Input**: The `sample.txt` file will be encrypted.
-- **Output**: The encrypted data is stored in `encrypted_sample.json`.
+- **Input**: The `sample.txt` file (or any file type) will be encrypted.
+- **Output**: The original `sample.txt` will be replaced with an encrypted version, and the original file will no longer exist.
 
 #### **Decrypting a File**
 
 ```bash
-./Encryptix.sh decrypt encrypted_sample.json decrypted_sample.txt
+./Encryptix.sh decrypt sample.txt
 ```
 
-- **Input**: The `encrypted_sample.json` file will be decrypted.
-- **Output**: The decrypted content is saved in `decrypted_sample.txt`.
+- **Input**: The encrypted `sample.txt` file (or any file type) will be decrypted.
+- **Output**: The original file content will replace the encrypted file, and the `.txt` file will be restored.
 
 #### **Encrypting a Directory**
 
 ```bash
-./Encryptix.sh encrypt_dir my_directory encrypted_directory
+./Encryptix.sh encrypt_dir "my folder"
 ```
 
-- **Input**: Encrypts all files in the `my_directory`.
-- **Output**: The encrypted files are saved as `.json` files in `encrypted_directory`.
+- **Input**: Encrypts all files (of any type) in the directory `my folder`, even if the path contains spaces.
+- **Output**: Each file in the directory will be replaced with its encrypted version.
 
 #### **Decrypting a Directory**
 
 ```bash
-./Encryptix.sh decrypt_dir encrypted_directory decrypted_directory
+./Encryptix.sh decrypt_dir "my folder"
 ```
 
-- **Input**: Decrypts all `.json` files from `encrypted_directory`.
-- **Output**: Decrypted files are saved in `decrypted_directory`.
+- **Input**: Decrypts all encrypted files (of any type) in the directory `my folder`.
+- **Output**: Each file in the directory will be replaced with its original, decrypted content.
 
 ---
 
 ## ⚙️ Command Structure
 
-1. **Encrypt a File**: Encrypts a single file and outputs a JSON file with encrypted data and IV.
+1. **Encrypt a File**: Encrypts a single file and replaces it with its encrypted version.
 
    ```bash
-   ./Encryptix.sh encrypt input_file output_file
+   ./Encryptix.sh encrypt input_file
    ```
 
-2. **Decrypt a File**: Decrypts an encrypted JSON file and restores the original content.
+2. **Decrypt a File**: Decrypts an encrypted file and replaces it with the original content.
 
    ```bash
-   ./Encryptix.sh decrypt input_file output_file
+   ./Encryptix.sh decrypt input_file
    ```
 
-3. **Encrypt a Directory**: Recursively encrypts all files in a directory and outputs each file as an encrypted JSON.
+3. **Encrypt a Directory**: Recursively encrypts all files (of any type) in a directory and replaces them with encrypted versions.
 
    ```bash
-   ./Encryptix.sh encrypt_dir input_directory output_directory
+   ./Encryptix.sh encrypt_dir input_directory
    ```
 
-4. **Decrypt a Directory**: Recursively decrypts all JSON files in a directory and restores the original files.
+4. **Decrypt a Directory**: Recursively decrypts all encrypted files (of any type) in a directory and replaces them with the original content.
 
    ```bash
-   ./Encryptix.sh decrypt_dir input_directory output_directory
+   ./Encryptix.sh decrypt_dir input_directory
    ```
 
 ---
 
 ## 💡 Important Notes
 
+- **Input File Types**: The script accepts all kinds of files (e.g., text, images, documents) for encryption and decryption.
+
 - **Password**: For both encryption and decryption operations, you will be prompted to enter a password. Ensure you use a strong password for security.
 
-- **JSON Output**: Encrypted files are saved in JSON format, containing both the encrypted data and IV used for decryption.
+- **File Path Handling**: The script now supports file paths with spaces or special characters. Always enclose paths with spaces in quotes (`" "`).
 
 - **Dependencies**: The script requires:
   - **Bash**: Make sure you have a Bash shell environment.
@@ -163,13 +164,11 @@ You can run the script from the terminal using the following syntax:
 After running the script, the files will be organized as follows:
 
 - **For File Encryption/Decryption**:
-  - The original file remains unchanged.
-  - Encrypted content is saved in a JSON file (`output_file.json`).
-  - Decrypted content is saved with a specified file extension (e.g., `.txt`, `.doc`).
+  - The original file will be replaced by the encrypted file or decrypted content.
+  - Encrypted files are no longer saved as separate JSON files—they replace the original files directly.
 
 - **For Directory Encryption/Decryption**:
-  - The encrypted files will be saved in the specified output directory with a `.json` extension.
-  - Decrypted files will be restored to their original format and saved in the output directory.
+  - Files in the input directory are replaced by their encrypted or decrypted versions.
 
 ---
 
@@ -186,7 +185,3 @@ After running the script, the files will be organized as follows:
 ## 📖 License
 
 This script is open-source and provided for educational purposes. Use responsibly and in compliance with legal regulations regarding encryption and data protection. Always encrypt sensitive information securely!
-
----
-
-This documentation provides a detailed overview of the script. You can follow these steps to encrypt or decrypt your files and directories efficiently and securely.
