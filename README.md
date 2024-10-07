@@ -50,7 +50,7 @@ The encryption process outputs a JSON file containing the encrypted data and ini
 You can run the script from the terminal using the following syntax:
 
 ```bash
-./Encryptix.sh {encrypt|decrypt|encrypt_dir|decrypt_dir} input_path
+./Encryptix.sh {encrypt|decrypt|encrypt_dir|decrypt_dir} input_file_or_path
 ```
 
 - `{encrypt}`: Encrypt a single file.
