@@ -1,187 +1,222 @@
-# 🛡️ Encryptix: AES-256 Encryption and Decryption Script Documentation
+# Encryptix - Documentation
 
-This documentation provides a comprehensive guide to using **Encryptix**, an AES-256 encryption and decryption script. Encryptix enables users to securely encrypt and decrypt files or directories using AES-256 encryption to protect sensitive data.
-
----
-
-## 📥 Importing the Script from GitHub
-
-1. **Clone the Repository**:
-
-   To get the script from GitHub, open your terminal and run:
-
-   ```bash
-   git clone https://github.com/alessgorgo/Encryptix.git
-   ```
-
-2. **Navigate to the Directory**:
-
-   After cloning, navigate into the repository folder:
-
-   ```bash
-   cd Encryptix
-   ```
-
-3. **Make the Script Executable**:
-
-   Ensure the script is executable by running:
-
-   ```bash
-   chmod +x Encryptix.sh
-   ```
+## Overview
+**Encryptix** is a lightweight terminal-based tool for encrypting and decrypting files and directories using **AES-256** encryption. Packaged as a shell script (`Encryptix.sh`), it provides a simple yet secure method for protecting sensitive data directly from the command line. It supports password-based encryption with **PBKDF2** key derivation for enhanced security and provides user-friendly logging and backup functionalities.
 
 ---
 
-## 🛠️ Script Overview
+## Features
 
-Encryptix provides two main functionalities:
-
-1. **Encrypt**: Encrypts a file or an entire directory using AES-256 encryption.
-2. **Decrypt**: Decrypts a previously encrypted file or directory.
-
-The encryption process outputs a JSON file containing the encrypted data and initialization vector (IV) used for encryption.
+- **File Encryption/Decryption**: Encrypt individual files with AES-256 encryption and securely decrypt them when needed.
+- **Directory Encryption/Decryption**: Encrypt or decrypt entire directories, simplifying batch processing of files.
+- **Alias Commands**: Simple aliases (`nc`, `dc`, `ncdir`, `dcdir`) to streamline the encryption/decryption process.
+- **Backup Creation**: Prompt to create a backup before encrypting a file, safeguarding original content.
+- **Secure Logging**: Operations are logged in `$HOME/file_encryption.log` for tracking encryption and decryption events.
+- **Password Security**: Utilizes **PBKDF2** for key derivation, improving security over SHA-256.
+- **Environment Variable for Password**: Option to use the `$PASSWORD` environment variable to handle passwords more securely.
+- **Interactive Password Input**: Secure, masked password input with confirmation for added assurance.
 
 ---
 
-## 📝 How to Use the Script
+## Getting Started
 
-### General Usage
+### Prerequisites
 
-You can run the script from the terminal using the following syntax:
+Ensure that your system has the following tools installed:
 
+- **OpenSSL**: For encryption and decryption.
+- **jq**: For handling JSON data during the encryption process.
+
+To install these dependencies:
 ```bash
-./Encryptix.sh {encrypt|decrypt|encrypt_dir|decrypt_dir} input_file_or_path
+sudo apt install openssl jq
 ```
 
-- `{encrypt}`: Encrypt a single file.
-- `{decrypt}`: Decrypt a single file.
-- `{encrypt_dir}`: Encrypt all files in a directory.
-- `{decrypt_dir}`: Decrypt all files in a directory.
+### Installation
 
-### Example Commands
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/alessgorgo/encryptix.git
+    ```
 
-#### **Encrypting a File**
+2. Navigate into the project directory:
+    ```bash
+    cd encryptix
+    ```
+
+3. Make the script executable:
+    ```bash
+    chmod +x Encryptix.sh
+    ```
+
+4. Optionally, move it to your `/usr/local/bin` for global access:
+    ```bash
+    sudo mv Encryptix.sh /usr/local/bin/encryptix
+    ```
+
+---
+
+## Usage
+
+Encryptix supports several operations for encryption and decryption of files and directories. Here's a breakdown of the available commands:
+
+### Command Structure
 
 ```bash
-./Encryptix.sh encrypt sample.txt
+./Encryptix.sh {operation} {file/directory}
 ```
 
-- **Input**: The `sample.txt` file (or any file type) will be encrypted.
-- **Output**: The original `sample.txt` will be replaced with an encrypted version, and the original file will no longer exist.
+### Operations
 
-#### **Decrypting a File**
+| Command        | Description                                        |
+|----------------|----------------------------------------------------|
+| `nc`           | Encrypt a single file (with backup prompt).         |
+| `dc`           | Decrypt a single file (with backup).                |
+| `ncdir`        | Encrypt all files in a directory.                   |
+| `dcdir`        | Decrypt all files in a directory.                   |
+| `encrypt`      | Alias for `nc`. Encrypt a single file.              |
+| `decrypt`      | Alias for `dc`. Decrypt a single file.              |
+| `encrypt-dir`  | Alias for `ncdir`. Encrypt an entire directory.     |
+| `decrypt-dir`  | Alias for `dcdir`. Decrypt an entire directory.     |
+
+### Example Usage
+
+#### Encrypt a File
 
 ```bash
-./Encryptix.sh decrypt sample.txt
+./Encryptix.sh nc myfile.txt
 ```
 
-- **Input**: The encrypted `sample.txt` file (or any file type) will be decrypted.
-- **Output**: The original file content will replace the encrypted file, and the `.txt` file will be restored.
+You will be prompted for a passkey and whether you would like to create a backup of the file.
 
-#### **Encrypting a Directory**
+#### Decrypt a File
 
 ```bash
-./Encryptix.sh encrypt_dir "my folder"
+./Encryptix.sh dc myfile.txt
 ```
 
-- **Input**: Encrypts all files (of any type) in the directory `my folder`, even if the path contains spaces.
-- **Output**: Each file in the directory will be replaced with its encrypted version.
+Provide the same passkey used during encryption.
 
-#### **Decrypting a Directory**
+#### Encrypt All Files in a Directory
 
 ```bash
-./Encryptix.sh decrypt_dir "my folder"
+./Encryptix.sh ncdir /path/to/myfolder
 ```
 
-- **Input**: Decrypts all encrypted files (of any type) in the directory `my folder`.
-- **Output**: Each file in the directory will be replaced with its original, decrypted content.
+#### Decrypt All Files in a Directory
+
+```bash
+./Encryptix.sh dcdir /path/to/myfolder
+```
 
 ---
 
-## ⚙️ Command Structure
+## Detailed Options
 
-1. **Encrypt a File**: Encrypts a single file and replaces it with its encrypted version.
+### Password Handling
 
-   ```bash
-   ./Encryptix.sh encrypt input_file
-   ```
+By default, the script will prompt for a password interactively. To securely pass the password via an environment variable, you can set the `$PASSWORD` variable before running the command:
 
-2. **Decrypt a File**: Decrypts an encrypted file and replaces it with the original content.
+```bash
+export PASSWORD="my_secret_password"
+./Encryptix.sh nc myfile.txt
+```
 
-   ```bash
-   ./Encryptix.sh decrypt input_file
-   ```
+### Logging
 
-3. **Encrypt a Directory**: Recursively encrypts all files (of any type) in a directory and replaces them with encrypted versions.
+Every action (encrypt/decrypt) is logged in a file located at:
 
-   ```bash
-   ./Encryptix.sh encrypt_dir input_directory
-   ```
+```bash
+$HOME/file_encryption.log
+```
 
-4. **Decrypt a Directory**: Recursively decrypts all encrypted files (of any type) in a directory and replaces them with the original content.
+To view the log directory, you can use the following command:
 
-   ```bash
-   ./Encryptix.sh decrypt_dir input_directory
-   ```
-
----
-
-## 💡 Important Notes
-
-- **Input File Types**: The script accepts all kinds of files (e.g., text, images, documents) for encryption and decryption.
-
-- **Password**: For both encryption and decryption operations, you will be prompted to enter a password. Ensure you use a strong password for security.
-
-- **File Path Handling**: The script now supports file paths with spaces or special characters. Always enclose paths with spaces in quotes (`" "`).
-
-- **Dependencies**: The script requires:
-  - **Bash**: Make sure you have a Bash shell environment.
-  - **OpenSSL**: The script uses OpenSSL for AES-256 encryption/decryption.
-  - **jq**: For parsing JSON files.
-
-  Install dependencies if they are missing:
-
-  ```bash
-  sudo apt-get install openssl jq  # On Linux systems
-  ```
+```bash
+./Encryptix.sh --log-dir
+```
 
 ---
 
-## 🛠️ Error Handling
+## Backup Creation
 
-- **Decryption Failure**: If decryption fails (e.g., due to incorrect password or corrupt encrypted file), the script will output an error:
+When encrypting files, the script will prompt you to create a backup:
 
-  ```bash
-  Error: Decryption failed. Please check your password and the encrypted file.
-  ```
+```bash
+Do you want to create a backup of myfile.txt before encrypting? (y/n):
+```
 
-- **Invalid Input**: If the provided JSON file lacks an IV or encrypted data, the script will terminate with a validation error.
+If you select "yes," a backup of the file will be created with a `.bak` extension:
 
----
+```bash
+myfile.txt.bak
+```
 
-## 📁 File Structure
-
-After running the script, the files will be organized as follows:
-
-- **For File Encryption/Decryption**:
-  - The original file will be replaced by the encrypted file or decrypted content.
-  - Encrypted files are no longer saved as separate JSON files—they replace the original files directly.
-
-- **For Directory Encryption/Decryption**:
-  - Files in the input directory are replaced by their encrypted or decrypted versions.
+The original file will be replaced by the encrypted version.
 
 ---
 
-## 🔐 Security Considerations
+## Security Features
 
-- **AES-256 Encryption**: This script uses **AES-256-CBC** encryption, which is a highly secure method to protect your files. Always store your passwords securely.
-
-- **Passwords**: Never share your password. If it is lost, decrypting the encrypted files becomes impossible.
-
-- **File Size**: There is no file size limitation, but encryption and decryption times may vary based on the size of files or directories.
+1. **AES-256 Encryption**: Encryptix uses AES-256-CBC mode to ensure a high level of data protection.
+2. **PBKDF2 Key Derivation**: For better security, passkeys are processed using PBKDF2 (Password-Based Key Derivation Function 2) with 100,000 iterations. This method strengthens the encryption by making brute-force attacks more difficult.
+3. **Environment Variable**: Password can be passed via the `$PASSWORD` environment variable for automation or script integration, eliminating the need for interactive input in some scenarios.
 
 ---
 
-## 📖 License
+## Error Handling
 
-This script is open-source and provided for educational purposes. Use responsibly and in compliance with legal regulations regarding encryption and data protection. Always encrypt sensitive information securely!
+### Common Errors and Solutions
+
+- **`openssl: Extra (unknown) options: "kdf_iter" "100000"`**  
+  Ensure your OpenSSL version supports PBKDF2. You may need to upgrade your OpenSSL version if it's outdated.
+
+- **`mktemp: mkstemp failed on /dev/shm/...`**  
+  Ensure that the `/dev/shm/` directory exists and has appropriate permissions, or modify the `mktemp` command to use a different directory.
+
+- **`Decryption failed. Please check your password.`**  
+  This error typically occurs if the wrong password is provided during decryption.
+
+---
+
+## FAQ
+
+### Can I use this script on Windows?
+
+Encryptix is designed for Unix-based systems (Linux and macOS). For Windows, you can use WSL (Windows Subsystem for Linux) to run the script.
+
+### Is my data truly secure?
+
+Encryptix uses AES-256-CBC encryption, which is widely regarded as secure. The use of PBKDF2 for key derivation further enhances the protection by making password guessing significantly harder. However, ensuring the security of your passkey is crucial.
+
+### How can I automate file encryption?
+
+You can automate file encryption/decryption by using the `$PASSWORD` environment variable and integrating Encryptix into your existing shell scripts.
+
+---
+
+## License
+
+Encryptix is licensed under the MIT License. See the [LICENSE](./LICENSE) file for more details.
+
+---
+
+## Changelog
+
+### v1.2-beta.1
+
++ Added alias support for operations: `nc`, `dc`, `ncdir`, `dcdir`.
++ Implemented logging functionality: logs are saved in `$HOME/file_encryption.log`.
++ Prompted backup creation before encryption.
++ Updated password prompt to "Enter passkey:".
++ Added support for password via `$PASSWORD` environment variable.
++ Improved security by using PBKDF2 for key derivation instead of SHA-256.
+/ Internal management of alias operations, removing external alias dependency.
+/ Log files are now securely stored in the home directory.
+/ `process_files_in_directory` handles both encryption and decryption.
+/ Removed outdated use of SHA-256 in favor of PBKDF2 for enhanced security.
+- Deprecated old logging methods that did not track encryption/decryption actions.
+
+---
+
+Encryptix is a simple, powerful tool for safeguarding your data. Whether you’re a developer, sysadmin, or privacy-conscious user, Encryptix will help ensure your files remain safe and secure.
