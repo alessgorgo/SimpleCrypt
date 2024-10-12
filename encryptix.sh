@@ -1,6 +1,6 @@
 #!/bin/bash
 
-log_file="$HOME/file_encryption.log"  # Cambiato il percorso del log alla home directory
+log_file="$HOME/file_encryption.log"
 
 check_dependencies() {
     command -v openssl >/dev/null 2>&1 || { echo >&2 "Error: OpenSSL is not installed. Aborting."; exit 1; }
@@ -13,7 +13,6 @@ generate_iv() {
 
 derive_key() {
     local password="$1"
-    # Use PBKDF2 to derive a 32-byte key from the password
     echo -n "$password" | openssl dgst -sha256 | awk '{print $2}'
 }
 
@@ -24,9 +23,8 @@ log() {
 encrypt_data() {
     local input_file="$1"
     local password="$2"
-    local create_backup="${3:-false}"  # Aggiunta opzione per backup automatico
+    local create_backup="${3:-false}"
 
-    # Handle full path and filename
     local dir_name
     dir_name=$(dirname "$input_file")
     local base_name
@@ -37,25 +35,20 @@ encrypt_data() {
     iv=$(generate_iv)
     key=$(derive_key "$password")
 
-    # Backup file, se richiesto
     if [[ "$create_backup" == "true" ]]; then
         cp "$input_file" "$input_file.bak"
         echo "Backup created: $input_file.bak"
         log "Backup created for $input_file" "INFO"
     fi
 
-    # Encrypt the data and output to a temporary file
     encrypted=$(openssl enc -aes-256-cbc -K "$key" -iv "$iv" -in "$input_file" -out /dev/stdout 2>/dev/null | base64)
 
-    # Store IV and encrypted data in JSON format
     final_json=$(jq -n --arg iv "$iv" --arg data "$encrypted" '{"iv":$iv,"data":$data}')
 
-    # Save the JSON in a temporary file
     local tmp_file
-    tmp_file=$(mktemp -t tmp)  # Usa /tmp per macOS
+    tmp_file=$(mktemp -t tmp)
     echo "$final_json" > "$tmp_file"
 
-    # Replace the original file with the encrypted content (in JSON format)
     mv "$tmp_file" "$dir_name/$base_name"
     log "File encrypted: $dir_name/$base_name" "INFO"
     echo "File encrypted and replaced: $dir_name/$base_name"
@@ -66,7 +59,6 @@ decrypt_data() {
     local password="$2"
     local create_backup="${3:-true}"
 
-    # Handle full path and filename
     local dir_name
     dir_name=$(dirname "$input_file")
     local base_name
@@ -86,7 +78,6 @@ decrypt_data() {
 
     key=$(derive_key "$password")
 
-    # Decrypt and store the output in a temporary file
     local tmp_file
     tmp_file=$(mktemp -t tmp)
     echo "$encrypted" | base64 -d | openssl enc -d -aes-256-cbc -K "$key" -iv "$iv" -out "$tmp_file" 2>/dev/null
@@ -97,12 +88,10 @@ decrypt_data() {
         exit 3
     fi
 
-    # Backup original encrypted file
     if [[ "$create_backup" == "true" ]]; then
         mv "$input_file" "$input_file.bak"
     fi
 
-    # Replace the original file with the decrypted content
     mv "$tmp_file" "$dir_name/$base_name"
     log "File decrypted: $dir_name/$base_name" "INFO"
     echo "File decrypted and replaced: $dir_name/$base_name"
@@ -136,8 +125,6 @@ print_usage() {
     echo "  $0 ncdir, encrypt-dir [NAME|PATH]        Encrypt all files in a directory."
     echo "  $0 dcdir, decrypt-dir [NAME|PATH]        Decrypt all files in a directory."
     echo
-    echo "  Original files will be backed up by default in the same folder."
-    echo
     echo "Options:"
     echo "  --backup, -b        Create backup of original file (default: true)"
     echo "  --silent, -s        Run in silent mode (no output shown in logs)"
@@ -145,17 +132,11 @@ print_usage() {
     echo "  --help, -h          Show this help message and exit"
     echo "  --log-dir, -ld      Show the directory where the log file is stored."
     echo
-    echo "Example:"
-    echo "  $0 nc sample.txt -b"
-    echo "  $0 nc /your/path -s"
-    echo
     exit 0
 }
 
-# Main script logic
 check_dependencies
 
-# Parse command line options
 silent=false
 create_backup=true
 verbose=false
@@ -188,7 +169,6 @@ if [[ "$#" -lt 2 ]]; then
     print_usage
 fi
 
-# Map alias input to operation
 case "$1" in
     nc|encrypt)
         operation="encrypt"
@@ -211,7 +191,6 @@ esac
 
 input="$2"
 
-# Handle password securely
 password=""
 if [[ -z "$PASSWORD" ]]; then
     read -s -p "Enter passkey: " password
@@ -241,6 +220,5 @@ case "$operation" in
         ;;
 esac
 
-# Pulisci variabili sensibili
 unset password
 unset password_confirm
