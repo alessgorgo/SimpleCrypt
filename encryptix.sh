@@ -1,10 +1,17 @@
 #!/bin/bash
 
+config_file="$HOME/file_encryption_config.conf"
+
+if [[ -f "$config_file" ]]; then
+    source "$config_file"
+fi
+
 log_file="$HOME/file_encryption.log"
 
 check_dependencies() {
-    command -v openssl >/dev/null 2>&1 || { echo >&2 "Error: OpenSSL is not installed. Aborting."; exit 1; }
-    command -v jq >/dev/null 2>&1 || { echo >&2 "Error: jq is not installed. Aborting."; exit 1; }
+    for cmd in openssl jq; do
+        command -v "$cmd" >/dev/null 2>&1 || { echo >&2 "Error: $cmd is not installed. Aborting."; exit 1; }
+    done
 }
 
 generate_iv() {
@@ -13,17 +20,28 @@ generate_iv() {
 
 derive_key() {
     local password="$1"
-    echo -n "$password" | openssl dgst -sha256 | awk '{print $2}'
+    echo -n "$password" | openssl enc -aes-256-cbc -pbkdf2 -pass pass:"$password" -nosalt -P | awk '/key/{print $2}'
 }
 
 log() {
-    echo "$(date) [$2]: $1" >> "$log_file"
+    if [ "$verbose" = true ] || [ "$2" = "ERROR" ]; then
+        echo "$(date) [$2]: $1" >> "$log_file"
+    fi
+}
+
+check_password_complexity() {
+    local password="$1"
+    if [[ ${#password} -lt 8 || ! "$password" =~ [A-Z] || ! "$password" =~ [a-z] || ! "$password" =~ [0-9] || ! "$password" =~ [^a-zA-Z0-9] ]]; then
+        echo "Error: Password must be at least 8 characters long and contain uppercase, lowercase, digits, and special characters."
+        exit 6
+    fi
 }
 
 encrypt_data() {
     local input_file="$1"
     local password="$2"
     local create_backup="${3:-false}"
+    local algo="${4:-aes-256-cbc}"
 
     local dir_name
     dir_name=$(dirname "$input_file")
@@ -41,7 +59,7 @@ encrypt_data() {
         log "Backup created for $input_file" "INFO"
     fi
 
-    encrypted=$(openssl enc -aes-256-cbc -K "$key" -iv "$iv" -in "$input_file" -out /dev/stdout 2>/dev/null | base64)
+    encrypted=$(openssl enc -"$algo" -K "$key" -iv "$iv" -in "$input_file" -out /dev/stdout 2>/dev/null | base64)
 
     final_json=$(jq -n --arg iv "$iv" --arg data "$encrypted" '{"iv":$iv,"data":$data}')
 
@@ -64,8 +82,12 @@ decrypt_data() {
     local base_name
     base_name=$(basename "$input_file")
 
-    local iv encrypted key decrypted
+    if [[ "$base_name" == *.bak ]]; then
+        echo "Skipping backup file: $input_file"
+        return
+    fi
 
+    local iv encrypted key decrypted
     encrypted_json=$(<"$input_file")
     iv=$(echo "$encrypted_json" | jq -r '.iv')
     encrypted=$(echo "$encrypted_json" | jq -r '.data')
@@ -79,7 +101,7 @@ decrypt_data() {
     key=$(derive_key "$password")
 
     local tmp_file
-    tmp_file=$(mktemp -t tmp)
+    tmp_file=$(mktemp "$TMPDIR/tmp.XXXXXX")
     echo "$encrypted" | base64 -d | openssl enc -d -aes-256-cbc -K "$key" -iv "$iv" -out "$tmp_file" 2>/dev/null
 
     if [[ $? -ne 0 ]]; then
@@ -90,9 +112,12 @@ decrypt_data() {
 
     if [[ "$create_backup" == "true" ]]; then
         mv "$input_file" "$input_file.bak"
+        echo "Backup created: $input_file.bak"
+        log "Backup created for $input_file" "INFO"
     fi
 
-    mv "$tmp_file" "$dir_name/$base_name"
+    # Replace the original file with the decrypted content
+    mv "$tmp_file" "$dir_name/$base_name"  # Correctly move to the original directory
     log "File decrypted: $dir_name/$base_name" "INFO"
     echo "File decrypted and replaced: $dir_name/$base_name"
 }
@@ -125,12 +150,18 @@ print_usage() {
     echo "  $0 ncdir, encrypt-dir [NAME|PATH]        Encrypt all files in a directory."
     echo "  $0 dcdir, decrypt-dir [NAME|PATH]        Decrypt all files in a directory."
     echo
+    echo "  Original files will be backed up by default in the same folder."
+    echo
     echo "Options:"
     echo "  --backup, -b        Create backup of original file (default: true)"
     echo "  --silent, -s        Run in silent mode (no output shown in logs)"
     echo "  --verbose, -v       Enable verbose logging for debugging"
     echo "  --help, -h          Show this help message and exit"
     echo "  --log-dir, -ld      Show the directory where the log file is stored."
+    echo
+    echo "Example:"
+    echo "  $0 -b nc sample.txt"
+    echo "  $0 -s nc /your/path"
     echo
     exit 0
 }
@@ -195,6 +226,7 @@ password=""
 if [[ -z "$PASSWORD" ]]; then
     read -s -p "Enter passkey: " password
     echo
+    check_password_complexity "$password"
     read -s -p "Confirm passkey: " password_confirm
     echo
     if [[ "$password" != "$password_confirm" ]]; then
