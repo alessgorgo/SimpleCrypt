@@ -1,3 +1,4 @@
+
 # Encryptix - Documentation
 
 ## Overview
@@ -13,8 +14,11 @@
 - **Backup Creation Prompt**: Before encrypting, you’ll be asked to create a backup to safeguard the original content.
 - **Secure Logging**: Encryption and decryption activities are logged in `$HOME/file_encryption.log`, ensuring traceability.
 - **Strong Key Derivation**: Utilizes **PBKDF2** with 100,000 iterations, improving security compared to SHA-256.
+- **Password Complexity Checks**: Ensures that passwords meet specified complexity requirements to enhance security.
 - **Password via Environment Variable**: Supports the `$PASSWORD` environment variable for secure, non-interactive operations.
 - **Silent and Verbose Modes**: New logging flexibility with silent (`-s`) and verbose (`-v`) options.
+- **Custom Temporary Directory**: Uses a specified `TMPDIR` for improved management of temporary files.
+- **Enhanced Error Handling**: Specific exit codes and improved error messages for better user feedback.
 
 ---
 
@@ -122,6 +126,10 @@ export PASSWORD="my_secret_password"
 ./Encryptix.sh nc myfile.txt
 ```
 
+### Password Complexity Checks
+
+To enhance security, passwords must meet specific complexity criteria, such as minimum length, inclusion of numbers, special characters, and uppercase/lowercase letters.
+
 ### Silent and Verbose Modes
 
 - Use `-s` for silent mode to suppress output.
@@ -171,8 +179,9 @@ The original file will then be encrypted.
 
 1. **AES-256 Encryption**: Encryptix uses AES-256-CBC to secure data, a widely regarded and secure encryption method.
 2. **PBKDF2 Key Derivation**: Passkeys are derived using **PBKDF2** with 100,000 iterations, which strengthens the encryption against brute-force attacks.
-3. **Password via Environment Variable**: The `$PASSWORD` environment variable can be used to securely pass passwords for automated operations.
-4. **Encrypted Data in JSON**: Encrypted files now store their initialization vector (IV) within a JSON format for better portability.
+3. **Password Complexity Checks**: Passwords are validated for strength before processing.
+4. **Password via Environment Variable**: The `$PASSWORD` environment variable can be used to securely pass passwords for automated operations.
+5. **Encrypted Data in JSON**: Encrypted files now store their initialization vector (IV) within a JSON format for better portability.
 
 ---
 
@@ -215,12 +224,18 @@ Encryptix is licensed under the MIT License. See the [LICENSE](./LICENSE) file f
 
 ## Changelog
 
-### v1.2-beta.2
+### Release v1.2
 
 + Enhanced security: PBKDF2 key derivation with 100,000 iterations.
++ Added password complexity checks to enforce stronger passwords.
 + Added `-s` (silent) and `-v` (verbose) modes for logging flexibility.
 + Prompted backup creation before encryption/decryption.
 + Encrypted data stored in JSON format with initialization vector (IV).
 + Improved alias support for simpler command usage.
 + Secure logging of all actions in `$HOME/file_encryption.log`.
-- Deprecated SHA-256 in favor of PBKDF2 for stronger security.
++ Custom TMPDIR for better temporary file management.
++ Enhanced error handling with specific exit codes and messages.
+
+---
+
+This updated documentation reflects the latest improvements and functionalities of Encryptix, ensuring users have clear and comprehensive guidance on how to use the tool effectively.
