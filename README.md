@@ -6,7 +6,7 @@
 
 ---
 
-**Important** for some errors of mine, the versions before **SimpleCrypt v1.2** are no longer available.
+**Important**: for some errors of mine, the versions before **SimpleCrypt v1.2** are no longer available.
 
 ---
 
