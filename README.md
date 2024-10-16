@@ -2,7 +2,7 @@
 # Encryptix - Documentation
 
 ## Overview
-**Encryptix** is a lightweight terminal-based tool for encrypting and decrypting files and directories using **AES-256** encryption. Packaged as a shell script (`Encryptix.sh`), it offers a simple and secure method for protecting sensitive data directly from the command line. With password-based encryption using **PBKDF2** key derivation for enhanced security, user-friendly logging, and backup functionalities, Encryptix makes security easier to manage.
+**Encryptix** is a lightweight terminal-based tool for encrypting and decrypting files and directories using **AES-256** encryption. Packaged as a shell script (`Encryptix.sh`), it offers a simple and secure method for protecting sensitive data directly from the command line. With password-based encryption using **Argon2id** for enhanced security, user-friendly logging, and backup functionalities, Encryptix makes security easier to manage.
 
 ---
 
@@ -11,9 +11,8 @@
 - **File Encryption/Decryption**: Encrypt individual files with AES-256 encryption and decrypt them securely when needed.
 - **Directory Encryption/Decryption**: Encrypt or decrypt entire directories, enabling batch processing of multiple files.
 - **Alias Commands**: Simple aliases (`nc`, `dc`, `ncdir`, `dcdir`) make encryption and decryption faster and more intuitive.
-- **Backup Creation Prompt**: Before encrypting, you’ll be asked to create a backup to safeguard the original content.
+- **Argon2id Key Derivation**: Utilizes **Argon2id**, a state-of-the-art memory-hard password-hashing algorithm, providing even stronger protection compared to PBKDF2.
 - **Secure Logging**: Encryption and decryption activities are logged in `$HOME/file_encryption.log`, ensuring traceability.
-- **Strong Key Derivation**: Utilizes **PBKDF2** with 100,000 iterations, improving security compared to SHA-256.
 - **Password Complexity Checks**: Ensures that passwords meet specified complexity requirements to enhance security.
 - **Password via Environment Variable**: Supports the `$PASSWORD` environment variable for secure, non-interactive operations.
 - **Silent and Verbose Modes**: New logging flexibility with silent (`-s`) and verbose (`-v`) options.
@@ -74,8 +73,8 @@ Encryptix provides various operations for file and directory encryption/decrypti
 
 | Command        | Description                                        |
 |----------------|----------------------------------------------------|
-| `nc`           | Encrypt a file with a backup prompt.                |
-| `dc`           | Decrypt a file with a backup prompt.                |
+| `nc`           | Encrypt a file.                                    |
+| `dc`           | Decrypt a file.                                    |
 | `ncdir`        | Encrypt all files in a directory.                   |
 | `dcdir`        | Decrypt all files in a directory.                   |
 | `encrypt`      | Alias for `nc`. Encrypt a file.                     |
@@ -91,7 +90,7 @@ Encryptix provides various operations for file and directory encryption/decrypti
 ./Encryptix.sh nc myfile.txt
 ```
 
-You will be prompted for a passkey and whether you would like to create a backup of the file.
+You will be prompted for a passkey to encrypt the file.
 
 #### Decrypt a File
 
@@ -157,28 +156,10 @@ To locate the log directory:
 
 ---
 
-## Backup Creation
-
-When encrypting a file, Encryptix will ask if you would like to create a backup:
-
-```bash
-Do you want to create a backup of myfile.txt before encrypting? (y/n):
-```
-
-If you select "yes," a backup of the file will be created with a `.bak` extension:
-
-```bash
-myfile.txt.bak
-```
-
-The original file will then be encrypted.
-
----
-
 ## Security Features
 
 1. **AES-256 Encryption**: Encryptix uses AES-256-CBC to secure data, a widely regarded and secure encryption method.
-2. **PBKDF2 Key Derivation**: Passkeys are derived using **PBKDF2** with 100,000 iterations, which strengthens the encryption against brute-force attacks.
+2. **Argon2id Key Derivation**: Passkeys are derived using **Argon2id**, a memory-hard algorithm that offers better resistance against brute-force attacks compared to PBKDF2.
 3. **Password Complexity Checks**: Passwords are validated for strength before processing.
 4. **Password via Environment Variable**: The `$PASSWORD` environment variable can be used to securely pass passwords for automated operations.
 5. **Encrypted Data in JSON**: Encrypted files now store their initialization vector (IV) within a JSON format for better portability.
@@ -190,7 +171,7 @@ The original file will then be encrypted.
 ### Common Errors and Solutions
 
 - **`openssl: Extra (unknown) options: "kdf_iter" "100000"`**  
-  Ensure your OpenSSL version supports PBKDF2. If it’s outdated, you may need to upgrade OpenSSL.
+  Ensure your OpenSSL version supports Argon2id. If it’s outdated, you may need to upgrade OpenSSL.
 
 - **`mktemp: mkstemp failed on /dev/shm/...`**  
   Verify that the `/dev/shm/` directory exists and has appropriate permissions, or modify the `mktemp` command to use another directory.
@@ -208,7 +189,7 @@ Encryptix is designed for Unix-based systems (Linux and macOS). On Windows, you 
 
 ### How secure is my data?
 
-Encryptix uses AES-256-CBC encryption, recognized as highly secure. The PBKDF2 key derivation function further strengthens the protection by making password guessing significantly harder. The security of your passkey is critical to ensure full protection.
+Encryptix uses AES-256-CBC encryption, recognized as highly secure. The Argon2id key derivation function further strengthens the protection by making password guessing significantly harder. The security of your passkey is critical to ensure full protection.
 
 ### Can I automate encryption tasks?
 
@@ -224,18 +205,11 @@ Encryptix is licensed under the MIT License. See the [LICENSE](./LICENSE) file f
 
 ## Changelog
 
-### Release v1.2
+### Release v1.3-beta.1
 
-+ Enhanced security: PBKDF2 key derivation with 100,000 iterations.
-+ Added password complexity checks to enforce stronger passwords.
-+ Added `-s` (silent) and `-v` (verbose) modes for logging flexibility.
-+ Prompted backup creation before encryption/decryption.
-+ Encrypted data stored in JSON format with initialization vector (IV).
-+ Improved alias support for simpler command usage.
-+ Secure logging of all actions in `$HOME/file_encryption.log`.
-+ Custom TMPDIR for better temporary file management.
-+ Enhanced error handling with specific exit codes and messages.
-
----
-
-This updated documentation reflects the latest improvements and functionalities of Encryptix, ensuring users have clear and comprehensive guidance on how to use the tool effectively.
++ Implemented Argon2id-based key derivation for enhanced security.
++ Generated random salt and IV for stronger encryption.
++ Updated encryption to use AES-256-CBC with OpenSSL.
++ Enhanced debug messages for tracing encryption processes.
++ Refactored key derivation and encryption logic.
++ Improved error handling and logging.
