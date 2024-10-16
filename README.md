@@ -1,5 +1,6 @@
+<img src="public/img/banner.png" alt="simplecrypt">
 
-# SimpleCrypt - Documentation
+# Documentation
 
 ## Overview
 **Encryptix** is a lightweight terminal-based tool for encrypting and decrypting files and directories using **AES-256** encryption. Packaged as a shell script (`Encryptix.sh`), it offers a simple and secure method for protecting sensitive data directly from the command line. With password-based encryption using **Argon2id** for enhanced security, user-friendly logging, and backup functionalities, Encryptix makes security easier to manage.
