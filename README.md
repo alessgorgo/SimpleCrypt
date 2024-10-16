@@ -1,4 +1,4 @@
-
+<img src="public/img/banner.png" alt="simplecrypt">
 
 # Documentation
 
