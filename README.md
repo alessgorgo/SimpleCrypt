@@ -3,7 +3,7 @@
 # Documentation
 
 ## Overview
-**Encryptix** is a lightweight terminal-based tool for encrypting and decrypting files and directories using **AES-256** encryption. Packaged as a shell script (`Encryptix.sh`), it offers a simple and secure method for protecting sensitive data directly from the command line. With password-based encryption using **Argon2id** for enhanced security, user-friendly logging, and backup functionalities, Encryptix makes security easier to manage.
+**SimpleCrypt** is a lightweight terminal-based tool for encrypting and decrypting files and directories using **AES-256** encryption. Packaged as a shell script (`SimpleCrypt.sh`), it offers a simple and secure method for protecting sensitive data directly from the command line. With password-based encryption using **Argon2id** for enhanced security, user-friendly logging, and backup functionalities, SimpleCrypt makes security easier to manage.
 
 ---
 
@@ -44,34 +44,34 @@ sudo apt install openssl jq
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/alessgorgo/encryptix.git
+    git clone https://github.com/alessgorgo/SimpleCrypt.git
     ```
 
 2. Navigate into the project directory:
     ```bash
-    cd encryptix
+    cd SimpleCrypt
     ```
 
 3. Make the script executable:
     ```bash
-    chmod +x Encryptix.sh
+    chmod +x SimpleCrypt.sh
     ```
 
 4. Optionally, move it to your `/usr/local/bin` for global access:
     ```bash
-    sudo mv Encryptix.sh /usr/local/bin/encryptix
+    sudo mv SimpleCrypt.sh /usr/local/bin/SimpleCrypt
     ```
 
 ---
 
 ## Usage
 
-Encryptix provides various operations for file and directory encryption/decryption. Here's how to use them:
+SimpleCrypt provides various operations for file and directory encryption/decryption. Here's how to use them:
 
 ### Command Structure
 
 ```bash
-./Encryptix.sh {operation} {file/directory} [options]
+./SimpleCrypt.sh {operation} {file/directory} [options]
 ```
 
 ### Operations
@@ -92,7 +92,7 @@ Encryptix provides various operations for file and directory encryption/decrypti
 #### Encrypt a File
 
 ```bash
-./Encryptix.sh nc myfile.txt
+./SimpleCrypt.sh nc myfile.txt
 ```
 
 You will be prompted for a passkey to encrypt the file.
@@ -100,7 +100,7 @@ You will be prompted for a passkey to encrypt the file.
 #### Decrypt a File
 
 ```bash
-./Encryptix.sh dc myfile.txt
+./SimpleCrypt.sh dc myfile.txt
 ```
 
 Provide the same passkey used during encryption.
@@ -108,13 +108,13 @@ Provide the same passkey used during encryption.
 #### Encrypt All Files in a Directory
 
 ```bash
-./Encryptix.sh ncdir /path/to/myfolder
+./SimpleCrypt.sh ncdir /path/to/myfolder
 ```
 
 #### Decrypt All Files in a Directory
 
 ```bash
-./Encryptix.sh dcdir /path/to/myfolder
+./SimpleCrypt.sh dcdir /path/to/myfolder
 ```
 
 ---
@@ -123,11 +123,11 @@ Provide the same passkey used during encryption.
 
 ### Password Handling
 
-By default, Encryptix will prompt for a password interactively. To securely pass a password using the `$PASSWORD` environment variable, you can do so like this:
+By default, SimpleCrypt will prompt for a password interactively. To securely pass a password using the `$PASSWORD` environment variable, you can do so like this:
 
 ```bash
 export PASSWORD="my_secret_password"
-./Encryptix.sh nc myfile.txt
+./SimpleCrypt.sh nc myfile.txt
 ```
 
 ### Password Complexity Checks
@@ -142,7 +142,7 @@ To enhance security, passwords must meet specific complexity criteria, such as m
 Example:
 
 ```bash
-./Encryptix.sh nc myfile.txt -v
+./SimpleCrypt.sh nc myfile.txt -v
 ```
 
 ### Logging
@@ -156,14 +156,14 @@ $HOME/file_encryption.log
 To locate the log directory:
 
 ```bash
-./Encryptix.sh --log-dir
+./SimpleCrypt.sh --log-dir
 ```
 
 ---
 
 ## Security Features
 
-1. **AES-256 Encryption**: Encryptix uses AES-256-CBC to secure data, a widely regarded and secure encryption method.
+1. **AES-256 Encryption**: SimpleCrypt uses AES-256-CBC to secure data, a widely regarded and secure encryption method.
 2. **Argon2id Key Derivation**: Passkeys are derived using **Argon2id**, a memory-hard algorithm that offers better resistance against brute-force attacks compared to PBKDF2.
 3. **Password Complexity Checks**: Passwords are validated for strength before processing.
 4. **Password via Environment Variable**: The `$PASSWORD` environment variable can be used to securely pass passwords for automated operations.
@@ -190,11 +190,11 @@ To locate the log directory:
 
 ### Can I use this script on Windows?
 
-Encryptix is designed for Unix-based systems (Linux and macOS). On Windows, you can use WSL (Windows Subsystem for Linux) to run Encryptix.
+SimpleCrypt is designed for Unix-based systems (Linux and macOS). On Windows, you can use WSL (Windows Subsystem for Linux) to run SimpleCrypt.
 
 ### How secure is my data?
 
-Encryptix uses AES-256-CBC encryption, recognized as highly secure. The Argon2id key derivation function further strengthens the protection by making password guessing significantly harder. The security of your passkey is critical to ensure full protection.
+SimpleCrypt uses AES-256-CBC encryption, recognized as highly secure. The Argon2id key derivation function further strengthens the protection by making password guessing significantly harder. The security of your passkey is critical to ensure full protection.
 
 ### Can I automate encryption tasks?
 
@@ -204,7 +204,7 @@ Yes, by using the `$PASSWORD` environment variable, you can automate file encryp
 
 ## License
 
-Encryptix is licensed under the MIT License. See the [LICENSE](./LICENSE) file for more details.
+SimpleCrypt is licensed under the MIT License. See the [LICENSE](./LICENSE) file for more details.
 
 ---
 
