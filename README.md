@@ -37,7 +37,7 @@ Ensure your system has the following tools installed:
 
 To install these dependencies:
 ```bash
-sudo apt install openssl jq
+sudo apt install openssl jq argon2
 ```
 
 ### Installation
