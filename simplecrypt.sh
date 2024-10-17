@@ -4,14 +4,59 @@ config_file="$HOME/file_encryption_config.conf"
 log_file="$HOME/file_encryption.log"
 max_password_attempts=5
 
-if [[ -f "$config_file" ]]; then
-    source "$config_file"
+create_default_config() {
+    cat > "$config_file" <<EOL
+# Default configuration for file encryption
+
+# Enable backup by default (true/false)
+ENABLE_BACKUP=false
+
+# Verbose mode to show more details (true/false)
+VERBOSE=false
+
+# Silent mode, no terminal output (true/false)
+SILENT=false
+
+# Argon2 parameters
+ARGON2_TIME_COST=65536
+ARGON2_MEMORY_COST=16
+ARGON2_PARALLELISM=4
+ARGON2_LENGTH=32
+EOL
+    echo "Default config file created at: $config_file"
+}
+
+if [[ ! -f "$config_file" ]]; then
+    echo "Config file not found, creating default config."
+    create_default_config
 fi
 
+source "$config_file"
+
 check_dependencies() {
+    local missing=()
     for cmd in openssl jq argon2; do
-        command -v "$cmd" >/dev/null 2>&1 || { echo >&2 "Error: $cmd is not installed. Aborting."; exit 1; }
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            missing+=("$cmd")
+        fi
     done
+    if [[ ${#missing[@]} -ne 0 ]]; then
+        echo "Error: Missing dependencies: ${missing[*]}"
+        exit 1
+    fi
+}
+
+get_password() {
+    local password=""
+    stty -echo
+    read -p "Enter passkey: " password
+    stty echo
+    echo "$password"
+}
+
+get_file_paths() {
+    local input_file="$1"
+    echo "$(dirname "$input_file") $(basename "$input_file")"
 }
 
 generate_iv() {
@@ -26,11 +71,24 @@ derive_key() {
     local password="$1"
     local salt="$2"
 
-    argon2id "$salt" "$password" -t 65536 -m 16 -p 4 -l 32 | cut -d'$' -f3
+    argon2id "$salt" -t "${ARGON2_TIME_COST:-2}" -m "${ARGON2_MEMORY_COST:-16}" -p "${ARGON2_PARALLELISM:-4}" -l "${ARGON2_LENGTH:-32}" | cut -d'$' -f6
 }
 
+trap 'rm -f "$tmp_file"; unset password; unset password_confirm' EXIT
+
 log() {
-    echo "$(date) [$2]: $1" >> "$log_file"
+    local message="$1"
+    local level="$2"
+
+    if [[ "$SILENT" == "true" ]]; then
+        return
+    fi
+
+    echo "$(date) [$level]: $message" >> "$log_file"
+
+    if [[ "$VERBOSE" == "true" ]]; then
+        echo "$(date) [$level]: $message"
+    fi
 }
 
 check_password_complexity() {
@@ -44,17 +102,15 @@ check_password_complexity() {
 encrypt_data() {
     local input_file="$1"
     local password="$2"
-    local create_backup="${3:-false}"
+    local create_backup="${3:-$ENABLE_BACKUP}"
 
     if [[ ! -f "$input_file" || ! -r "$input_file" ]]; then
         echo "Error: Input file does not exist or is not readable."
         exit 1
     fi
 
-    local dir_name
-    dir_name=$(dirname "$input_file")
-    local base_name
-    base_name=$(basename "$input_file")
+    local dir_name base_name
+    read dir_name base_name <<< "$(get_file_paths "$input_file")"
 
     local iv salt key encrypted final_json
     iv=$(openssl rand -hex 16)
@@ -62,33 +118,28 @@ encrypt_data() {
 
     key=$(derive_key "$password" "$salt")
 
-    echo "Debug Info: Key Length=${#key}, IV Length=${#iv}"
+    trap 'unset key' RETURN
 
     if [[ "$create_backup" == "true" ]]; then
         cp "$input_file" "$input_file.bak"
         echo "Backup created: $input_file.bak"
     fi
 
-    echo "Debug Info: Input File='$input_file', Key='$key', IV='$iv'"
-
     encrypted=$(openssl enc -aes-256-cbc -K "$key" -iv "$iv" -in "$input_file" -out /dev/stdout 2>/dev/null | base64)
 
     if [[ -z "$encrypted" ]]; then
         echo "Error: Encryption failed, no data returned."
-        echo "Debug Info: Key='$key', IV='$iv'"
         exit 1
     fi
-
-    echo "Debug Info: Encrypted Data (Base64)='$encrypted'"
 
     final_json=$(jq -n --arg iv "$iv" --arg salt "$salt" --arg data "$encrypted" '{"iv":$iv,"salt":$salt,"data":$data}')
 
     local tmp_file
     tmp_file=$(mktemp -t tmp)
-    echo "$final_json" > "$tmp_file"
 
+    echo "$final_json" > "$tmp_file"
     mv "$tmp_file" "$dir_name/$base_name"
-    echo "File encrypted and replaced: $dir_name/$base_name"
+    log "File encrypted and replaced: $dir_name/$base_name" "INFO"
 }
 
 decrypt_data() {
@@ -96,10 +147,8 @@ decrypt_data() {
     local password="$2"
     local create_backup="${3:-true}"
 
-    local dir_name
-    dir_name=$(dirname "$input_file")
-    local base_name
-    base_name=$(basename "$input_file")
+    local dir_name base_name
+    read dir_name base_name <<< "$(get_file_paths "$input_file")"
 
     if [[ "$base_name" == *.bak ]]; then
         echo "Skipping backup file: $input_file"
@@ -112,8 +161,6 @@ decrypt_data() {
     encrypted=$(echo "$encrypted_json" | jq -r '.data')
     salt=$(echo "$encrypted_json" | jq -r '.salt')
 
-    echo "Debug Info: IV=$iv, Salt=$salt, Encrypted Data=$encrypted"
-
     if [[ -z "$iv" || -z "$encrypted" || -z "$salt" ]]; then
         echo "Error: Invalid JSON input. IV, salt, or encrypted data is missing."
         exit 2
@@ -121,12 +168,12 @@ decrypt_data() {
 
     key=$(derive_key "$password" "$salt")
 
+    trap 'unset key' RETURN
+
     local tmp_file
     tmp_file=$(mktemp "$TMPDIR/tmp.XXXXXX")
 
-    echo "$encrypted" | base64 -d | openssl enc -d -aes-256-cbc -K "$key" -iv "$iv" -out "$tmp_file" 2>/dev/null
-
-    if [[ $? -ne 0 ]]; then
+    if ! echo "$encrypted" | base64 -d | openssl enc -d -aes-256-cbc -K "$key" -iv "$iv" -out "$tmp_file" 2>/dev/null; then
         echo "Error: Decryption failed. Please check your password and the encrypted file."
         exit 3
     fi
@@ -137,7 +184,22 @@ decrypt_data() {
     fi
 
     mv "$tmp_file" "$dir_name/$base_name"
+    log "File decrypted and replaced: $dir_name/$base_name" "INFO"
 }
+
+encrypt_dir() {
+    local dir="$1"
+    local password="$2"
+    find "$dir" -type f -exec bash -c 'encrypt_data "{}" "$password" true' \;
+}
+
+decrypt_dir() {
+    local dir="$1"
+    local password="$2"
+    find "$dir" -type f -exec bash -c 'decrypt_data "{}" "$password" true' \;
+}
+
+create_backup=${ENABLE_BACKUP:-false}
 
 print_usage() {
     echo
@@ -165,7 +227,6 @@ print_usage() {
 check_dependencies
 
 silent=false
-create_backup=false
 verbose=false
 
 while [[ "$#" -gt 0 ]]; do
@@ -187,8 +248,7 @@ while [[ "$#" -gt 0 ]]; do
             exit 0
             ;;
         -cfd|--conf-dir)
-            #echo "Config file is stored in: $config_file"
-            echo "Config not implemented yet."
+            echo "Log file is stored in: $config_file"
             exit 0
             ;;
         *)
@@ -226,42 +286,18 @@ case "$1" in
         ;;
 esac
 
-password_attempts=0
-password=""
-while [[ $password_attempts -lt $max_password_attempts ]]; do
-    read -s -p "Enter passkey: " password
-    echo
-    check_password_complexity "$password"
-    read -s -p "Confirm passkey: " password_confirm
-    echo
-    if [[ "$password" == "$password_confirm" ]]; then
-        break
-    else
-        echo "Passwords do not match. Please try again."
-        ((password_attempts++))
-        if [[ $password_attempts -eq $max_password_attempts ]]; then
-            echo "Error: Maximum password attempts exceeded. Aborting."
-            exit 5
-        fi
-    fi
-done
+password=$(get_password)
+check_password_complexity "$password"
 
-case "$operation" in
-    encrypt)
-        encrypt_data "$input" "$password" "$create_backup"
-        ;;
-    decrypt)
-        decrypt_data "$input" "$password" "$create_backup"
-        ;;
-    encrypt-dir)
-        echo "Encrypting directory not implemented yet."
-        exit 7
-        ;;
-    decrypt-dir)
-        echo "Decrypting directory not implemented yet."
-        exit 7
-        ;;
-esac
-
-unset password
-unset password_confirm
+if [[ "$operation" == "encrypt" ]]; then
+    encrypt_data "$input" "$password" "$create_backup"
+elif [[ "$operation" == "decrypt" ]]; then
+    decrypt_data "$input" "$password" "$create_backup"
+elif [[ "$operation" == "encrypt-dir" ]]; then
+    encrypt_dir "$input" "$password"
+elif [[ "$operation" == "decrypt-dir" ]]; then
+    decrypt_dir "$input" "$password"
+else
+    echo "Unknown operation."
+    exit 5
+fi
