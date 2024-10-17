@@ -3,7 +3,7 @@
 # Documentation
 
 ## Overview
-**SimpleCrypt** is a lightweight terminal-based tool for encrypting and decrypting files and directories using **AES-256** encryption. Packaged as a shell script (`SimpleCrypt.sh`), it offers a simple and secure method for protecting sensitive data directly from the command line. With password-based encryption using **Argon2id** for enhanced security, user-friendly logging, and backup functionalities, SimpleCrypt makes security easier to manage.
+**SimpleCrypt** is a lightweight terminal-based tool for encrypting and decrypting files and directories using **AES-256** encryption. Packaged as a shell script (`simplecrypt.sh`), it offers a simple and secure method for protecting sensitive data directly from the command line. With password-based encryption using **Argon2id** for enhanced security, user-friendly logging, and backup functionalities, SimpleCrypt makes security easier to manage.
 
 ---
 
@@ -54,12 +54,12 @@ sudo apt install openssl jq
 
 3. Make the script executable:
     ```bash
-    chmod +x SimpleCrypt.sh
+    chmod +x simplecrypt.sh
     ```
 
 4. Optionally, move it to your `/usr/local/bin` for global access:
     ```bash
-    sudo mv SimpleCrypt.sh /usr/local/bin/SimpleCrypt
+    sudo mv simplecrypt.sh /usr/local/bin/SimpleCrypt
     ```
 
 ---
