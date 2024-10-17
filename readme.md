@@ -1,3 +1,4 @@
+
 <img src="public/img/banner.png" alt="simplecrypt">
 
 # Documentation
@@ -7,7 +8,7 @@
 
 ---
 
-**Important**: for some errors of mine, the versions before **SimpleCrypt v1.3 Beta 1** are no longer available.
+**Important**: Due to earlier errors, versions before **SimpleCrypt v1.3 Beta 1** are no longer available.
 
 ---
 
@@ -18,6 +19,7 @@
 - **Alias Commands**: Simple aliases (`nc`, `dc`, `ncdir`, `dcdir`) make encryption and decryption faster and more intuitive.
 - **Argon2id Key Derivation**: Utilizes **Argon2id**, a state-of-the-art memory-hard password-hashing algorithm, providing even stronger protection compared to PBKDF2.
 - **Secure Logging**: Encryption and decryption activities are logged in `$HOME/file_encryption.log`, ensuring traceability.
+- **Automatic Config Management**: Creates a config file on the first run, allowing for customizable Argon2 parameters.
 - **Password Complexity Checks**: Ensures that passwords meet specified complexity requirements to enhance security.
 - **Password via Environment Variable**: Supports the `$PASSWORD` environment variable for secure, non-interactive operations.
 - **Silent and Verbose Modes**: New logging flexibility with silent (`-s`) and verbose (`-v`) options.
@@ -165,9 +167,10 @@ To locate the log directory:
 
 1. **AES-256 Encryption**: SimpleCrypt uses AES-256-CBC to secure data, a widely regarded and secure encryption method.
 2. **Argon2id Key Derivation**: Passkeys are derived using **Argon2id**, a memory-hard algorithm that offers better resistance against brute-force attacks compared to PBKDF2.
-3. **Password Complexity Checks**: Passwords are validated for strength before processing.
-4. **Password via Environment Variable**: The `$PASSWORD` environment variable can be used to securely pass passwords for automated operations.
-5. **Encrypted Data in JSON**: Encrypted files now store their initialization vector (IV) within a JSON format for better portability.
+3. **Automatic Config File Creation**: If the config file is not found, it is automatically created with default Argon2 parameters.
+4. **Password Complexity Checks**: Passwords are validated for strength before processing.
+5. **Password via Environment Variable**: The `$PASSWORD` environment variable can be used to securely pass passwords for automated operations.
+6. **Encrypted Data in JSON**: Encrypted files now store their initialization vector (IV) within a JSON format for better portability.
 
 ---
 
@@ -210,11 +213,17 @@ SimpleCrypt is licensed under the MIT License. See the [LICENSE](./LICENSE) file
 
 ## Changelog
 
-### Release v1.3-beta.1
+### Release v1.3-beta.2
 
-+ Implemented Argon2id-based key derivation for enhanced security.
-+ Generated random salt and IV for stronger encryption.
-+ Updated encryption to use AES-256-CBC with OpenSSL.
-+ Enhanced debug messages for tracing encryption processes.
-+ Refactored key derivation and encryption logic.
-+ Improved error handling and logging.
++ Fixed terminal freeze issue during password input by improving derive_key function.
++ Corrected handling of Argon2id command for key derivation with the appropriate password and salt.
++ Added robust error handling and validation for encryption and decryption processes.
++ Implemented automatic config file creation if missing, with defaults for Argon2 parameters.
++ Improved debug logging for enhanced traceability of encryption and decryption operations.
++ Refined backup creation logic to ensure original files are preserved during encryption.
++ Enforced better cleanup of sensitive data in memory, enhancing security.
+
+### Key Updates in Documentation:
+- Added **Automatic Config Management** to Features.
+- Updated **Security Features** to include automatic config file creation.
+- Revised the **Changelog** to reflect the latest improvements.
