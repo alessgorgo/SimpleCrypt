@@ -21,9 +21,9 @@ VERBOSE=false
 SILENT=false
 
 # Key types, algorithms, and operations
-KEY=RSA4K                  # Changed from "RSA 4K" to "RSA4K"
-WRAP_UNWRAP=RSA-OAEP-256   # Changed from "Wrap/Unwrap" to "WRAP_UNWRAP"
-SIGN_VERIFY=RS512          # Changed from "Sign/Verify" to "SIGN_VERIFY"
+KEY=RSA4K
+WRAP_UNWRAP=RSA-OAEP-256
+SIGN_VERIFY=RS512
 
 # Argon2 parameters
 ARGON2_TIME_COST=65536
