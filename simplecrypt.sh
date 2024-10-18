@@ -9,7 +9,7 @@ max_password_attempts=5
 
 create_default_config() {
     cat > "$config_file" <<EOL
-# Default configuration for file encryption
+# Default file encryption configuration
 
 # Enable backup by default (true/false)
 ENABLE_BACKUP=false
