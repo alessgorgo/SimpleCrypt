@@ -1,7 +1,7 @@
 
 <img src="public/img/banner.png" alt="simplecrypt">
 <a href="https://github.com/alessgorgo/SimpleCrypt/releases"><img src="https://img.shields.io/github/tag-pre/alessgorgo/SimpleCrypt.svg?color=gray" alt="Last Version" /></a>
-<a href="https://github.com/alessgorgo/SimpleCrypt/LICENSE"><img src="https://img.shields.io/badge/MIT%20License-606060" alt="License" /></a>
+<a href="https://github.com/alessgorgo/SimpleCrypt/blob/SimpleCrypt-log/LICENSE"><img src="https://img.shields.io/badge/MIT%20License-606060" alt="License" /></a>
 <a href="https://github.com/alessgorgo/SimpleCrypt/stargazers"><img src="https://img.shields.io/github/stars/alessgorgo/SimpleCrypt?color=gray&logo=github" alt="Github star" /></a> <br>
   
 # Documentation
