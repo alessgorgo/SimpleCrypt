@@ -2,6 +2,9 @@
 
 config_file="$HOME/file_encryption_config.conf"
 log_file="$HOME/file_encryption.log"
+public_key_path="${PUBLIC_KEY_PATH:-$HOME/public_key.pem}"
+private_key_path="${PRIVATE_KEY_PATH:-$HOME/private_key.pem}"
+
 max_password_attempts=5
 
 create_default_config() {
@@ -16,6 +19,11 @@ VERBOSE=false
 
 # Silent mode, no terminal output (true/false)
 SILENT=false
+
+# Key types, algorithms, and operations
+KEY=RSA4K                  # Changed from "RSA 4K" to "RSA4K"
+WRAP_UNWRAP=RSA-OAEP-256   # Changed from "Wrap/Unwrap" to "WRAP_UNWRAP"
+SIGN_VERIFY=RS512          # Changed from "Sign/Verify" to "SIGN_VERIFY"
 
 # Argon2 parameters
 ARGON2_TIME_COST=65536
@@ -32,6 +40,30 @@ if [[ ! -f "$config_file" ]]; then
 fi
 
 source "$config_file"
+
+generate_rsa_keys() {
+    echo "Generating RSA key pair at default locations..."
+    openssl genpkey -algorithm RSA -out "$private_key_path" -pkeyopt rsa_keygen_bits:4096
+
+    openssl rsa -pubout -in "$private_key_path" -out "$public_key_path"
+
+    echo "Public key saved to: $public_key_path"
+    echo "Private key saved to: $private_key_path"
+}
+
+if [[ ! -f "$public_key_path" ]]; then
+    echo "Public key not found at $public_key_path."
+    generate_rsa_keys
+fi
+
+if [[ ! -f "$private_key_path" ]]; then
+    echo "Private key not found at $private_key_path."
+    generate_rsa_keys
+fi
+
+key_algorithm="${KEY:-AES-256-CBC}"
+wrap_algorithm="${WRAP_UNWRAP:-RSA-OAEP-256}"
+sign_algorithm="${SIGN_VERIFY:-RS512}"
 
 check_dependencies() {
     local missing=()
@@ -109,37 +141,32 @@ encrypt_data() {
         exit 1
     fi
 
-    local dir_name base_name
-    read dir_name base_name <<< "$(get_file_paths "$input_file")"
+    local aes_key
+    aes_key=$(openssl rand -hex 32)
 
-    local iv salt key encrypted final_json
+    local iv
     iv=$(openssl rand -hex 16)
-    salt=$(generate_salt)
 
-    key=$(derive_key "$password" "$salt")
+    local encrypted_file
+    encrypted_file=$(openssl enc -aes-256-cbc -K "$aes_key" -iv "$iv" -in "$input_file" -out /dev/stdout | base64)
 
-    trap 'unset key' RETURN
-
-    if [[ "$create_backup" == "true" ]]; then
-        cp "$input_file" "$input_file.bak"
-        echo "Backup created: $input_file.bak"
-    fi
-
-    encrypted=$(openssl enc -aes-256-cbc -K "$key" -iv "$iv" -in "$input_file" -out /dev/stdout 2>/dev/null | base64)
-
-    if [[ -z "$encrypted" ]]; then
+    if [[ -z "$encrypted_file" ]]; then
         echo "Error: Encryption failed, no data returned."
         exit 1
     fi
 
-    final_json=$(jq -n --arg iv "$iv" --arg salt "$salt" --arg data "$encrypted" '{"iv":$iv,"salt":$salt,"data":$data}')
+    local encrypted_aes_key
+    encrypted_aes_key=$(echo -n "$aes_key" | openssl pkeyutl -encrypt -pubin -inkey "$public_key_path" | base64)
 
-    local tmp_file
-    tmp_file=$(mktemp -t tmp)
+    local final_json
+    final_json=$(jq -n --arg iv "$iv" --arg aes_key "$encrypted_aes_key" --arg data "$encrypted_file" '{
+        "iv": $iv,
+        "aes_key": $aes_key,
+        "data": $data
+    }')
 
-    echo "$final_json" > "$tmp_file"
-    mv "$tmp_file" "$dir_name/$base_name"
-    log "File encrypted and replaced: $dir_name/$base_name" "INFO"
+    echo "$final_json" > "$input_file"
+    log "File encrypted and saved as: $input_file" "INFO"
 }
 
 decrypt_data() {
@@ -147,44 +174,30 @@ decrypt_data() {
     local password="$2"
     local create_backup="${3:-true}"
 
-    local dir_name base_name
-    read dir_name base_name <<< "$(get_file_paths "$input_file")"
-
-    if [[ "$base_name" == *.bak ]]; then
-        echo "Skipping backup file: $input_file"
-        return
+    if [[ ! -f "$input_file" || ! -r "$input_file" ]]; then
+        echo "Error: Input file does not exist or is not readable."
+        exit 1
     fi
 
-    local iv encrypted salt key decrypted
+    local encrypted_json
     encrypted_json=$(<"$input_file")
+
+    echo "Debug: Encrypted JSON content:"
+    echo "$encrypted_json"
+
+    local iv encrypted_data encrypted_aes_key
     iv=$(echo "$encrypted_json" | jq -r '.iv')
-    encrypted=$(echo "$encrypted_json" | jq -r '.data')
-    salt=$(echo "$encrypted_json" | jq -r '.salt')
+    encrypted_data=$(echo "$encrypted_json" | jq -r '.data')
+    encrypted_aes_key=$(echo "$encrypted_json" | jq -r '.aes_key')
 
-    if [[ -z "$iv" || -z "$encrypted" || -z "$salt" ]]; then
-        echo "Error: Invalid JSON input. IV, salt, or encrypted data is missing."
-        exit 2
-    fi
+    local aes_key
+    aes_key=$(echo "$encrypted_aes_key" | base64 -d | openssl pkeyutl -decrypt -inkey "$private_key_path")
 
-    key=$(derive_key "$password" "$salt")
+    local decrypted_data
+    decrypted_data=$(echo "$encrypted_data" | base64 -d | openssl enc -d -aes-256-cbc -K "$aes_key" -iv "$iv")
 
-    trap 'unset key' RETURN
-
-    local tmp_file
-    tmp_file=$(mktemp "$TMPDIR/tmp.XXXXXX")
-
-    if ! echo "$encrypted" | base64 -d | openssl enc -d -aes-256-cbc -K "$key" -iv "$iv" -out "$tmp_file" 2>/dev/null; then
-        echo "Error: Decryption failed. Please check your password and the encrypted file."
-        exit 3
-    fi
-
-    if [[ "$create_backup" == "true" ]]; then
-        mv "$input_file" "$input_file.bak"
-        echo "Backup created: $input_file.bak"
-    fi
-
-    mv "$tmp_file" "$dir_name/$base_name"
-    log "File decrypted and replaced: $dir_name/$base_name" "INFO"
+    echo "$decrypted_data" > "$input_file"
+    log "File decrypted and saved as: $input_file" "INFO"
 }
 
 encrypt_dir() {
@@ -204,100 +217,82 @@ create_backup=${ENABLE_BACKUP:-false}
 print_usage() {
     echo
     echo "Usage:"
-    echo "  $0 nc, encrypt [FILE|PATH]               Encrypt a single file."
-    echo "  $0 dc, decrypt [FILE|PATH]               Decrypt a single file."
-    echo "  $0 ncdir, encrypt-dir [NAME|PATH]        Encrypt all files in a directory."
-    echo "  $0 dcdir, decrypt-dir [NAME|PATH]        Decrypt all files in a directory."
+    echo "  $0 nc, encrypt [FILE|PATH]                   Encrypt a single file."
+    echo "  $0 dc, decrypt [FILE|PATH]                   Decrypt a single file."
+    echo "  $0 ncdir, encrypt-dir [NAME|PATH]            Encrypt all files in a directory."
+    echo "  $0 dcdir, decrypt-dir [NAME|PATH]            Decrypt all files in a directory."
     echo
     echo "Options:"
-    echo "  --backup, -b        Create backup of original file in the same folder (default: false)"
-    echo "  --silent, -s        Run in silent mode (no output shown in logs)"
-    echo "  --verbose, -v       Enable verbose logging for debugging"
-    echo "  --help, -h          Show this help message and exit"
-    echo "  --log-dir, -ld      Show the directory where the log file is stored"
-    echo "  --conf-dir, -cfd    Show the directory where the config file is stored"
+    echo "  --verbose, -v               Enable verbose logging for debugging"
+    echo "  --help, -h                  Show this help message and exit"
+    echo "  --log-dir, -ld              Show the directory where the log file is stored"
+    echo "  --conf-dir, -cfd            Show the directory where the config file is stored"
+    echo "  --public-key-path, -pb      Show the directory where the config file is stored"
+    echo "  --private-key-path, -prv    Show the directory where the config file is stored"
     echo
     echo "Example:"
-    echo "  $0 -b nc sample.txt"
-    echo "  $0 -s nc /your/path"
+    echo "  $0 -v encrypt sample.txt"
+    echo "  $0 decrypt /your/path"
     echo
     exit 0
 }
 
-check_dependencies
-
-silent=false
-verbose=false
-
-while [[ "$#" -gt 0 ]]; do
-    case "$1" in
-        -b|--backup)
-            create_backup=true
-            ;;
-        -s|--silent)
-            silent=true
-            ;;
-        -v|--verbose)
-            verbose=true
-            ;;
-        -h|--help)
-            print_usage
-            ;;
-        -ld|--log-dir)
-            echo "Log file is stored in: $log_file"
-            exit 0
-            ;;
-        -cfd|--conf-dir)
-            echo "Log file is stored in: $config_file"
-            exit 0
-            ;;
-        *)
-            break
-            ;;
-    esac
-done
-
-if [[ "$#" -lt 2 ]]; then
-    echo "Error: Missing required arguments."
+if [[ $# -lt 1 ]]; then
     print_usage
 fi
 
-case "$1" in
-    nc|encrypt)
-        operation="encrypt"
-        input="$2"
-        ;;
-    dc|decrypt)
-        operation="decrypt"
-        input="$2"
-        ;;
-    ncdir|encrypt-dir)
-        operation="encrypt-dir"
-        input="$2"
-        ;;
-    dcdir|decrypt-dir)
-        operation="decrypt-dir"
-        input="$2"
-        ;;
-    *)
-        echo "Invalid operation."
-        print_usage
-        exit 4
-        ;;
-esac
-
-password=$(get_password)
-check_password_complexity "$password"
-
-if [[ "$operation" == "encrypt" ]]; then
-    encrypt_data "$input" "$password" "$create_backup"
-elif [[ "$operation" == "decrypt" ]]; then
-    decrypt_data "$input" "$password" "$create_backup"
-elif [[ "$operation" == "encrypt-dir" ]]; then
-    encrypt_dir "$input" "$password"
-elif [[ "$operation" == "decrypt-dir" ]]; then
-    decrypt_dir "$input" "$password"
-else
-    echo "Unknown operation."
-    exit 5
-fi
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        nc|encrypt)
+            shift
+            input_file="$1"
+            password=$(get_password)
+            encrypt_data "$input_file" "$password" "$create_backup"
+            ;;
+        dc|decrypt)
+            shift
+            input_file="$1"
+            password=$(get_password)
+            decrypt_data "$input_file" "$password" "$create_backup"
+            ;;
+        ncdir|encrypt-dir)
+            shift
+            dir="$1"
+            password=$(get_password)
+            encrypt_dir "$dir" "$password"
+            ;;
+        dcdir|decrypt-dir)
+            shift
+            dir="$1"
+            password=$(get_password)
+            decrypt_dir "$dir" "$password"
+            ;;
+        --verbose|-v)
+            VERBOSE=true
+            ;;
+        --help|-h)
+            print_usage
+            ;;
+        --log-dir|-ld)
+            echo "Log directory: $log_file"
+            exit 0
+            ;;
+        --conf-dir|-cfd)
+            echo "Config directory: $config_file"
+            exit 0
+            ;;
+            --public-key-path|-pb)
+            echo "Public key directory $public_key_path"
+            exit 0
+            ;;
+            --private-key-path|-prv)
+            echo "Public key directory $private_key_path"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            print_usage
+            ;;
+    esac
+    shift
+done
