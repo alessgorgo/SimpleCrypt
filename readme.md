@@ -1,6 +1,9 @@
 
 <img src="public/img/banner.png" alt="simplecrypt">
-
+<a href="https://github.com/alessgorgo/SimpleCrypt/releases"><img src="https://img.shields.io/github/tag-pre/alessgorgo/SimpleCrypt.svg?color=lightgray" alt="Last Version" /></a>
+<a href="https://github.com/alessgorgo/SimpleCrypt/LICENSE"><img src="https://img.shields.io/github/license/alessgorgo/SimpleCrypt?color=lightgray" alt="License" /></a>
+<a href="https://github.com/alessgorgo/SimpleCrypt/stargazers"><img src="https://img.shields.io/github/stars/alessgorgo/SimpleCrypt?color=lightgray&logo=github" alt="Github star" /></a> <br>
+  
 # Documentation
 
 ## Overview
