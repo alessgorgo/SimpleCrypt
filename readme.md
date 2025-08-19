@@ -7,7 +7,8 @@
 # Documentation
 
 ## Overview
-**SimpleCrypt** is a lightweight terminal-based tool for encrypting and decrypting files and directories using **AES-256** encryption. Packaged as a shell script (`simplecrypt.sh`), it offers a simple and secure method for protecting sensitive data directly from the command line. With password-based encryption using **Argon2id** for enhanced security, user-friendly logging, backup functionalities, and customizable options, SimpleCrypt simplifies the management of your data security.
+
+SimpleCrypt is a robust Rust-based command-line application that provides secure file and directory encryption using AES-256-CBC with PBKDF2 key derivation. It offers comprehensive features for both individual files and entire directories with progress feedback and secure memory practices.
 
 ---
 
@@ -17,313 +18,442 @@
 
 ## Features
 
-- **File Encryption/Decryption**: Encrypt individual files with AES-256 encryption and decrypt them securely when needed.
-- **Directory Encryption/Decryption**: Encrypt or decrypt entire directories, enabling batch processing of multiple files.
-- **Alias Commands**: Simple aliases (`nc`, `dc`, `ncdir`, `dcdir`) make encryption and decryption faster and more intuitive.
-- **Argon2id Key Derivation**: Utilizes **Argon2id**, a state-of-the-art memory-hard password-hashing algorithm, providing stronger protection compared to PBKDF2.
-- **Secure Logging**: Encryption and decryption activities are logged in `$HOME/file_encryption.log`, ensuring traceability.
-- **Automatic Config Management**: Creates a config file on the first run, allowing for customizable Argon2 parameters.
-- **Password Complexity Checks**: Ensures that passwords meet specified complexity requirements to enhance security.
-- **Password via Environment Variable**: Supports the `$PASSWORD` environment variable for secure, non-interactive operations.
-- **Silent and Verbose Modes**: New logging flexibility with silent (`-s`) and verbose (`-v`) options.
-- **Custom Temporary Directory**: Uses a specified `TMPDIR` for improved management of temporary files.
-- **Enhanced Error Handling**: Specific exit codes and improved error messages for better user feedback.
-- **Backup Option**: Allows users to create backups of original files during encryption and decryption processes.
+- **AES-256-CBC Encryption**: Industry-standard symmetric encryption
+- **PBKDF2 Key Derivation**: Secure password-based key derivation with 100,000 iterations
+- **File & Directory Support**: Encrypt individual files or entire directories recursively
+- **Progress Feedback**: Real-time progress indicators and completion summaries
+- **Secure Memory**: Sensitive data is securely wiped from memory after operations
+- **Comprehensive Error Handling**: Detailed error messages and validation
+- **Cross-Platform**: Works on macOS, Linux, and Windows
 
----
-
-## Supported Encryption Types (Experimental)
-
-**SimpleCrypt** currently supports the following encryption types:
-
-1. **AES-256-CBC**: The default encryption algorithm used for file and directory encryption. It is widely regarded for its security and efficiency.
-  
-2. **AES-256-GCM**: An experimental option that provides authenticated encryption with associated data (AEAD). This mode offers both confidentiality and integrity, making it suitable for scenarios where data integrity is crucial.
-
-**Note**: The AES-256-GCM option is still in the experimental stage. Users are encouraged to test its functionality and report any issues.
-
----
-
-## Supported Key Types and Wrapping Algorithms
-
-### Key Types
-- **RSA4K**: A 4096-bit RSA key used for public key encryption and decryption. This is the default key type and provides a high level of security.
-
-### Wrapping Algorithms
-- **RSA-OAEP-256**: The default key wrapping algorithm used in SimpleCrypt. It utilizes RSA encryption with Optimal Asymmetric Encryption Padding (OAEP) and SHA-256 for secure key management.
-
-### Signing Algorithms
-- **RS512**: An RSA signature algorithm using SHA-512. This is used for signing and verifying data integrity.
-
----
-
-## Configuration File
-
-**SimpleCrypt** creates a configuration file on the first run, which allows users to customize various parameters for encryption and decryption. Below are the default settings and explanations for each parameter:
-
-### Default File Encryption Configuration
-
-```bash
-# Default public key path
-PUBLIC_KEY_PATH="/Users/aleks/public_key.pem"
-
-# Default private key path
-PRIVATE_KEY_PATH="/Users/aleks/private_key.pem"
-
-# Enable backup by default
-ENABLE_BACKUP=true
-
-# Verbose mode to show more details
-VERBOSE=true
-
-# Silent mode, no terminal output
-SILENT=false
-
-# Key types, algorithms, and operations
-KEY=RSA4K
-WRAP_UNWRAP=RSA-OAEP-256
-SIGN_VERIFY=RS512
-
-# Argon2 parameters (only relevant for AES)
-ARGON2_TIME_COST=65536
-ARGON2_MEMORY_COST=16
-ARGON2_PARALLELISM=4
-ARGON2_LENGTH=32
-```
-
-### Parameter Descriptions
-
-- **PUBLIC_KEY_PATH**: Specifies the file path to the public key used for encryption. Modify this to point to your own public key.
-  
-- **PRIVATE_KEY_PATH**: Specifies the file path to the private key used for decryption. Modify this to point to your own private key.
-
-- **ENABLE_BACKUP**: Determines whether to enable backups of original files during encryption and decryption. Set to `true` to create backups.
-
-- **VERBOSE**: When set to `true`, the script will output more detailed information during operations. Set to `false` for minimal output.
-
-- **SILENT**: If set to `true`, the script suppresses all terminal output. This is useful for automated scripts where output is not needed.
-
-- **KEY**: Specifies the type of key used for encryption. In this case, it is set to `RSA4K`, which refers to a 4096-bit RSA key.
-
-- **WRAP_UNWRAP**: Indicates the key wrapping/unwrapping algorithm used. Set to `RSA-OAEP-256` for secure key management.
-
-- **SIGN_VERIFY**: Specifies the algorithm used for signing and verifying data. Set to `RS512`, which uses RSA with SHA-512.
-
-- **ARGON2_TIME_COST**: Defines the time cost parameter for Argon2 key derivation, determining how long the hashing should take.
-
-- **ARGON2_MEMORY_COST**: Specifies the amount of memory (in megabytes) allocated for Argon2 during key derivation.
-
-- **ARGON2_PARALLELISM**: Sets the level of parallelism for Argon2 key derivation, indicating how many threads can be used.
-
-- **ARGON2_LENGTH**: Specifies the desired length of the derived key in bytes.
-
----
-
-## Getting Started
+## Installation
 
 ### Prerequisites
 
-Ensure your system has the following tools installed:
+- Rust and Cargo (latest stable version)
+- OpenSSL development libraries
 
-- **OpenSSL**: For encryption and decryption.
-- **jq**: For handling JSON data during encryption.
-- **argon2**: For secure key derivation.
+### System Dependencies
 
-To install these dependencies:
+#### macOS
 ```bash
-sudo apt install openssl jq argon2
+# Install OpenSSL using Homebrew
+brew install openssl
+
+# Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-### Installation
+#### Ubuntu/Debian
+```bash
+# Install OpenSSL development libraries
+sudo apt-get update
+sudo apt-get install libssl-dev build-essential
 
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/alessgorgo/SimpleCrypt.git
-    ```
+# Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
 
-2. Navigate into the project directory:
-    ```bash
-    cd SimpleCrypt
-    ```
+#### Fedora/CentOS
+```bash
+# Install OpenSSL development libraries
+sudo dnf install openssl-devel gcc
 
-3. Make the script executable:
-    ```bash
-    chmod +x simplecrypt.sh
-    ```
+# Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
 
-4. Optionally, move it to your `/usr/local/bin` for global access:
-    ```bash
-    sudo mv simplecrypt.sh /usr/local/bin/SimpleCrypt
-    ```
+#### Windows
+```powershell
+# Install OpenSSL using Chocolatey (as Administrator)
+choco install openssl
 
----
+# Install Rust (if not already installed)
+iwr -useb -uri https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe | iex
+```
+
+### Build Instructions
+
+1. **Clone or download the project**
+   ```bash
+   # If using git
+   git clone <repository-url>
+   cd SimpleCrypt
+   
+   # Or extract the project files
+   ```
+
+2. **Build the application**
+   ```bash
+   # Build in release mode (optimized)
+   cargo build --release
+   
+   # Or build in debug mode (faster compilation)
+   cargo build
+   ```
+
+3. **Run the application**
+   ```bash
+   # From the project directory
+   cargo run -- <command> <arguments>
+   
+   # Or use the compiled binary
+   ./target/release/simplecrypt <command> <arguments>
+   ```
 
 ## Usage
 
-SimpleCrypt provides various operations for file and directory encryption/decryption. Here's how to use them:
+### Basic Commands
 
-### Command Structure
-
+#### Encrypt a Single File
 ```bash
-./SimpleCrypt.sh {operation} {file/directory} [options]
+cargo run -- encrypt document.txt mysecurepassword
 ```
 
-### Operations
-
-| Command        | Description                                        |
-|----------------|----------------------------------------------------|
-| `nc`           | Encrypt a file.                                    |
-| `dc`           | Decrypt a file.                                    |
-| `ncdir`        | Encrypt all files in a directory.                 |
-| `dcdir`        | Decrypt all files in a directory.                 |
-| `encrypt`      | Alias for `nc`. Encrypt a file.                   |
-| `decrypt`      | Alias for `dc`. Decrypt a file.                   |
-| `encrypt-dir`  | Alias for `ncdir`. Encrypt all files in a directory.|
-| `decrypt-dir`  | Alias for `dcdir`. Decrypt all files in a directory.|
-
-### Example Usage
-
-#### Encrypt a File
-
+#### Decrypt a Single File
 ```bash
-./SimpleCrypt.sh nc myfile.txt
+cargo run -- decrypt document.txt mysecurepassword
 ```
-
-You will be prompted for a passkey to encrypt the file.
-
-#### Decrypt a File
-
-```bash
-./SimpleCrypt.sh dc myfile.txt
-```
-
-Provide the same passkey used during encryption.
 
 #### Encrypt All Files in a Directory
-
 ```bash
-./SimpleCrypt.sh ncdir /path/to/myfolder
+cargo run -- encrypt-dir /path/to/directory mysecurepassword
 ```
 
 #### Decrypt All Files in a Directory
-
 ```bash
-./SimpleCrypt.sh dcdir /path/to/myfolder
+cargo run -- decrypt-dir /path/to/directory mysecurepassword
 ```
 
----
-
-## Options
-
-### Password Handling
-
-By default, SimpleCrypt will prompt for a password interactively. To securely pass a password using the `$PASSWORD` environment variable, you can do so like this:
-
+#### Show Help
 ```bash
-export PASSWORD="my_secret_password"
-./SimpleCrypt.sh nc myfile.txt
+cargo run -- --help
 ```
 
-### Password Complexity Checks
+### Command Reference
 
-To enhance security, passwords must meet specific complexity criteria, including a minimum length and inclusion of numbers, special characters, and uppercase/lowercase letters.
+#### `encrypt [FILE] [PASSWORD]`
+Encrypts a single file using the provided password.
 
-### Silent and Verbose Modes
+**Arguments:**
+- `FILE`: Path to the file to encrypt
+- `PASSWORD`: Secure password for encryption
 
-- Use `-s` for silent mode to suppress output.
-- Use `-v` for verbose mode for detailed logging.
-
-Example:
-
+**Example:**
 ```bash
-./SimpleCrypt.sh nc myfile.txt -v
+cargo run -- encrypt sensitive_data.txt "MyP@ssw0rd123!"
 ```
 
-### Logging
+#### `decrypt [FILE] [PASSWORD]`
+Decrypts a single file using the provided password.
 
-Encryption and decryption actions are logged in:
+**Arguments:**
+- `FILE`: Path to the encrypted file to decrypt
+- `PASSWORD`: Password used for encryption
 
+**Example:**
 ```bash
-$HOME/file_encryption.log
+cargo run -- decrypt sensitive_data.txt "MyP@ssw0rd123!"
 ```
 
-To locate the log directory:
+#### `encrypt-dir [DIRECTORY] [PASSWORD]`
+Encrypts all files in a directory recursively.
 
+**Arguments:**
+- `DIRECTORY`: Path to the directory to encrypt
+- `PASSWORD`: Secure password for encryption
+
+**Example:**
 ```bash
-./SimpleCrypt.sh --log-dir
+cargo run -- encrypt-dir ./my_documents "MyP@ssw0rd123!"
 ```
 
----
+#### `decrypt-dir [DIRECTORY] [PASSWORD]`
+Decrypts all files in a directory recursively.
 
-## Security Features
+**Arguments:**
+- `DIRECTORY`: Path to the directory containing encrypted files
+- `PASSWORD`: Password used for encryption
 
-1. **AES-256 Encryption**: SimpleCrypt uses AES-256-CBC to secure data
+**Example:**
+```bash
+cargo run -- decrypt-dir ./my_documents "MyP@ssw0rd123!"
+```
 
-, a widely regarded and secure encryption method.
-2. **Argon2id Key Derivation**: Passkeys are derived using **Argon2id**, a memory-hard algorithm that offers better resistance against brute-force attacks compared to PBKDF2.
-3. **Automatic Config File Creation**: If the config file is not found, it is automatically created with default Argon2 parameters.
-4. **Password Complexity Checks**: Passwords are validated for strength before processing.
-5. **Password via Environment Variable**: The `$PASSWORD` environment variable can be used to securely pass passwords for automated operations.
-6. **Encrypted Data in JSON**: Encrypted files now store their initialization vector (IV) within a JSON format for better portability.
-7. **Backup Option**: Enables users to create backups of original files during encryption, ensuring data safety.
+### Security Best Practices
 
----
+#### Password Selection
+- Use strong passwords (minimum 12 characters)
+- Include a mix of uppercase, lowercase, numbers, and special characters
+- Avoid common words or predictable patterns
+- Use a unique password for each encryption operation
 
-## Error Handling
+#### Password Management
+- Never store passwords in plain text
+- Consider using a password manager
+- Be careful when typing passwords (watch for shoulder surfing)
+- Use environment variables for better security (see advanced usage)
 
-### Common Errors and Solutions
+#### File Handling
+- Always verify decrypted files before deleting originals
+- Keep backups of important files before encryption
+- Use version control for important directories
+- Test encryption/decryption with non-critical files first
 
-- **`openssl: Extra (unknown) options: "kdf_iter" "100000"`**  
-  Ensure your OpenSSL version supports Argon2id. If it’s outdated, you may need to upgrade OpenSSL.
+### Advanced Usage
 
-- **`mktemp: mkstemp failed on /dev/shm/...`**  
-  Verify that the `/dev/shm/` directory exists and has appropriate permissions, or modify the `mktemp` command to use another directory.
+#### Using Environment Variables for Passwords
+```bash
+# Set password in environment variable
+export SIMPLECRYPT_PASSWORD="MyP@ssw0rd123!"
 
-- **`Decryption failed. Please check your password.`**  
-  This error usually occurs if the incorrect password is provided.
+# Use the environment variable
+cargo run -- encrypt document.txt $SIMPLECRYPT_PASSWORD
+```
 
----
+#### Scripting and Automation
+```bash
+#!/bin/bash
+# encrypt_script.sh
 
-## FAQ
+PASSWORD="SecureScriptPassword2024"
+SOURCE_DIR="/path/to/source"
+DEST_DIR="/path/to/destination"
 
-### Can I use this script on Windows?
+# Create destination directory if it doesn't exist
+mkdir -p "$DEST_DIR"
 
-SimpleCrypt is designed for Unix-based systems (Linux and macOS). On Windows, you can use WSL (Windows Subsystem for Linux) to run SimpleCrypt.
+# Encrypt all files in source directory
+for file in "$SOURCE_DIR"/*; do
+    if [ -f "$file" ]; then
+        filename=$(basename "$file")
+        echo "Encrypting $filename..."
+        cargo run -- encrypt "$file" "$PASSWORD"
+        mv "$file" "$DEST_DIR/"
+    fi
+done
 
-### How secure is my data?
+echo "Encryption completed successfully!"
+```
 
-SimpleCrypt uses AES-256-CBC encryption, recognized as highly secure. The Argon2id key derivation function further strengthens the protection by making password guessing significantly harder. The security of your passkey is critical to ensure full protection.
+#### Batch Processing with Error Handling
+```bash
+#!/bin/bash
+# batch_decrypt.sh
 
-### Can I automate encryption tasks?
+PASSWORD="MySecretPassword"
+ENCRYPTED_DIR="./encrypted_files"
+DECRYPTED_DIR="./decrypted_files"
 
-Yes, by using the `$PASSWORD` environment variable, you can automate file encryption and decryption in scripts without needing interactive password input.
+# Create output directory
+mkdir -p "$DECRYPTED_DIR"
 
----
+# Process files with error handling
+for file in "$ENCRYPTED_DIR"/*; do
+    if [ -f "$file" ]; then
+        filename=$(basename "$file")
+        echo "Processing $filename..."
+        
+        if cargo run -- decrypt "$file" "$PASSWORD" > /dev/null 2>&1; then
+            echo "✅ Successfully decrypted $filename"
+            mv "$file" "$DECRYPTED_DIR/"
+        else
+            echo "❌ Failed to decrypt $filename - check password or file integrity"
+        fi
+    fi
+done
+```
+
+## Technical Details
+
+### Encryption Specifications
+
+- **Algorithm**: AES-256-CBC (Cipher Block Chaining)
+- **Key Derivation**: PBKDF2 with SHA-256
+- **Iterations**: 100,000 (for brute-force resistance)
+- **Salt Length**: 16 bytes (randomly generated)
+- **IV Length**: 16 bytes (randomly generated)
+- **Output Format**: JSON-encoded structure
+
+### Output Format
+
+Encrypted files contain a JSON structure with the following fields:
+
+```json
+{
+  "salt": "base64-encoded-salt",
+  "iv": "base64-encoded-iv", 
+  "data": "base64-encoded-encrypted-data"
+}
+```
+
+### Security Considerations
+
+1. **Memory Security**: Sensitive data (keys, salts, IVs) is zeroed from memory after use
+2. **No Key Storage**: Keys are derived from passwords and never stored permanently
+3. **Random Values**: Salt and IV are generated using cryptographically secure random number generation
+4. **Error Handling**: Comprehensive validation prevents security vulnerabilities from malformed input
+
+### Performance Considerations
+
+- **PBKDF2 Iterations**: Higher iterations increase security but slow down operations
+- **Large Files**: Memory usage scales with file size (entire file loaded into memory)
+- **Directory Operations**: Progress indicators help monitor long-running operations
+
+## Troubleshooting
+
+### Common Issues
+
+#### "Error: Password cannot be empty"
+**Cause**: Empty password provided
+**Solution**: Use a non-empty password
+
+#### "Error: File not found"
+**Cause**: Specified file or directory doesn't exist
+**Solution**: Verify the path is correct and file exists
+
+#### "Error decrypting file: This could be due to incorrect password or corrupted file"
+**Cause**: Wrong password or corrupted encrypted file
+**Solution**: Verify password and file integrity
+
+#### "Permission denied"
+**Cause**: Insufficient permissions to read/write files
+**Solution**: Check file permissions and run with appropriate privileges
+
+#### "Failed to read directory"
+**Cause**: Directory doesn't exist or insufficient permissions
+**Solution**: Verify directory path and permissions
+
+### Debug Information
+
+For detailed debugging, you can enable verbose output:
+
+```bash
+# Enable Rust backtrace on errors
+RUST_BACKTRACE=1 cargo run -- encrypt file.txt password
+
+# Check file permissions
+ls -la file.txt
+
+# Verify OpenSSL installation
+openssl version
+```
+
+## Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+cargo test
+
+# Run tests with verbose output
+cargo test -- --nocapture
+
+# Run specific test
+cargo test test_single_file_encryption_decryption
+```
+
+### Test Coverage
+
+The test suite includes:
+- Single file encryption/decryption
+- Directory encryption/decryption
+- Wrong password validation
+- Empty password validation
+- Help command functionality
+
+## Contributing
+
+### Development Setup
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
+
+### Code Style
+
+- Follow Rust standard formatting: `cargo fmt`
+- Run clippy lints: `cargo clippy`
+- Ensure comprehensive test coverage
+- Update documentation for new features
 
 ## License
 
-SimpleCrypt is licensed under the MIT License. See the [LICENSE](./LICENSE) file for more details.
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+## Support
+
+For issues, questions, or contributions:
+1. Check the troubleshooting section
+2. Review existing issues
+3. Create a new issue with detailed information
+4. Include system information and error messages
+
+## Version History
+
+- **v1.0.0**: Initial release with basic encryption/decryption functionality
+- **v1.1.0**: Added directory operations and progress feedback
+- **v1.2.0**: Implemented PBKDF2 key derivation and comprehensive error handling
+- **v1.3.0**: Added secure memory practices and integration tests
 
 ---
 
-## Changelog
+**Disclaimer**: This software is provided "as is" without warranty. Always backup important files before encryption operations. The authors are not responsible for any data loss or security breaches resulting from the use of this software.
 
-### Release v1.3-beta.3
+---
 
-+ Fixed terminal freeze issue during password input by improving the `derive_key` function.
-+ Corrected handling of Argon2id command for key derivation with the appropriate password and salt.
-+ Added robust error handling and validation for encryption and decryption processes.
-+ Implemented automatic config file creation if missing, with defaults for Argon2 parameters.
-+ Improved debug logging for enhanced traceability of encryption and decryption operations.
-+ Refined backup creation logic to ensure original files are preserved during encryption.
-+ Enforced better cleanup of sensitive data in memory, enhancing security.
-+ Introduced logging flexibility with silent (`-s`) and verbose (`-v`) options.
-+ Enhanced password complexity checks to ensure strong security measures.
+## **Complete Installation Process:**
 
-### Key Updates in Documentation:
-- Added **Backup Option** to Features.
-- Updated **Supported Encryption Types** section for experimental AES-256-GCM.
-- Updated **Supported Key Types and Wrapping Algorithms** section with details.
-- Updated **Security Features** to include backup functionalities.
-- Added **Configuration File** section with detailed explanations of each parameter.
-- Revised the **Changelog** to reflect the latest improvements.
+### **System Dependencies:**
+- **macOS**: OpenSSL via Homebrew + Rust
+- **Ubuntu/Debian**: `libssl-dev` + Rust
+- **Fedora/CentOS**: `openssl-devel` + Rust  
+- **Windows**: OpenSSL via Chocolatey + Rust
+
+### **Build Instructions:**
+1. Install prerequisites (OpenSSL + Rust)
+2. Clone/download project
+3. Build with `cargo build --release`
+4. Run with `cargo run -- <command> <arguments>`
+
+## **Detailed Usage Guide:**
+
+### **Basic Commands:**
+- `encrypt [FILE] [PASSWORD]` - Single file encryption
+- `decrypt [FILE] [PASSWORD]` - Single file decryption
+- `encrypt-dir [DIRECTORY] [PASSWORD]` - Directory encryption
+- `decrypt-dir [DIRECTORY] [PASSWORD]` - Directory decryption
+- `--help` - Show help
+
+### **Security Best Practices:**
+- Strong password requirements (12+ chars, mixed characters)
+- Password management recommendations
+- File handling best practices
+- Environment variable usage for security
+
+### **Advanced Usage:**
+- Scripting and automation examples
+- Batch processing with error handling
+- Environment variable integration
+- Performance considerations
+
+### **Technical Specifications:**
+- **Algorithm**: AES-256-CBC with PBKDF2-SHA256
+- **Key Derivation**: 100,000 iterations
+- **Output Format**: JSON-encoded structure
+- **Memory Security**: Secure data wiping practices
+
+### **Troubleshooting:**
+- Common error messages and solutions
+- Debug information
+- Permission issues
+- File corruption handling
+
+### **Testing:**
+- Test suite coverage (5 comprehensive tests)
+- Running instructions
+- Test scenarios covered
