@@ -25,7 +25,6 @@ Options:
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
     
-    // Check for help flag first
     if args.len() == 2 && (args[1] == "--help" || args[1] == "-h") {
         print_usage();
         return Ok(());
@@ -41,17 +40,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         process::exit(1);
     }
 
-    let action = &args[1]; // command passed via command line
+    let action = &args[1];
     let file_path = &args[2];
     let password = &args[3];
 
-    // Validate password is not empty
     if password.is_empty() {
         eprintln!("Error: Password cannot be empty");
         process::exit(1);
     }
 
-    // Validate file path
     if file_path.is_empty() {
         eprintln!("Error: File path cannot be empty");
         process::exit(1);
@@ -119,7 +116,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             let dir_path = &args[2];
             let password = &args[3];
             
-            // Validate directory exists
             match fs::metadata(dir_path) {
                 Ok(metadata) => {
                     if !metadata.is_dir() {
@@ -134,7 +130,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
             }
             
-            // Collect all files first to show progress
             let mut files: Vec<std::path::PathBuf> = Vec::new();
             let mut error_count = 0;
             
@@ -238,7 +233,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
             }
             
-            // Collect all files first to show progress
             let mut files: Vec<std::path::PathBuf> = Vec::new();
             let mut error_count = 0;
             
