@@ -10,7 +10,49 @@ serde_json = "1.0"
 base64 = "0.21"
 pbkdf2 = "0.12"
 sha2 = "0.10"
+hmac = "0.12"
+rand = "0.8"
+tempfile = "3.8"
+zeroize = { version = "1.7", features = ["derive"] }
+anyhow = "1.0"
+thiserror = "1.0"
+indicatif = { version = "0.17", optional = true }
+rpassword = "7.2"
+libc = { version = "0.2", optional = true }
+winapi = { version = "0.3", optional = true }
 
 [dev-dependencies]
 tempfile = "3.8"
 zeroize = "1.7"
+criterion = "0.5"
+
+[[bench]]
+name = "performance"
+harness = false
+
+[[bench]]
+name = "stable_performance"
+harness = false
+
+[[bench]]
+name = "two_percent_outlier_benchmark"
+harness = false
+
+[[bench]]
+name = "two_percent_demo"
+harness = false
+
+[features]
+default = ["progress"]
+progress = ["indicatif"]
+
+[profile.release]
+lto = true              
+codegen-units = 1       
+panic = "abort"         
+strip = true            
+opt-level = 3           
+
+[profile.release.package."*"]
+opt-level = 3           
+
