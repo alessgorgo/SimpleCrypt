@@ -1,0 +1,17 @@
+[package]
+name = "simplecrypt-cli"
+version = "2.0.0"
+edition = "2021"
+description = "Command-line interface for SimpleCrypt file encryption"
+
+[[bin]]
+name = "simplecrypt"
+path = "src/main.rs"
+
+[dependencies]
+simplecrypt-core = { path = "../simplecrypt-core" }
+clap = { version = "4", features = ["derive"] }
+rpassword = "7.2"
+indicatif = "0.17"
+anyhow = "1.0"
+toml = "0.8"
